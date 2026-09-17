@@ -1,0 +1,17 @@
+@{
+    ViewData["Title"] = "Something went wrong";
+    Layout = "_AuthLayout";
+    var code = ViewBag.StatusCode as int?;
+}
+
+<div class="login-card">
+    <div class="kicker">STI CampusFlow</div>
+    <h2>@(code == 404 ? "Page not found" : "Something went wrong")</h2>
+    <p class="sub">
+        @(code == 404
+            ? "That link does not point to anything in CampusFlow. It may have been removed, or the reference code may be mistyped."
+            : "The request could not be completed. Please try again — if it keeps happening, tell the registrar office.")
+    </p>
+    <a class="btn btn-teal btn-block" asp-controller="Home" asp-action="Index">Back to safety</a>
+    <div class="login-foot">Reference: <code>@ViewBag.RequestId</code></div>
+</div>

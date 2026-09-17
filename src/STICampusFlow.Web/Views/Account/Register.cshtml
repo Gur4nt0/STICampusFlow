@@ -1,0 +1,92 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Create account";
+    Layout = "_AuthLayout";
+}
+
+<div class="login-card login-card-wide">
+    <div class="kicker">STI CampusFlow</div>
+    <h2>Create your account</h2>
+    <p class="sub">Only currently enrolled students of STI College Global City may register.</p>
+
+    <form method="post" asp-action="Register">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+
+        <div class="id-field">
+            <label asp-for="StudentNumber">Student number (11 digits)</label>
+            <input asp-for="StudentNumber" inputmode="numeric" maxlength="11" minlength="11" pattern="\d{11}"
+                   title="Exactly 11 digits" placeholder="02000123456" required autofocus />
+            <span asp-validation-for="StudentNumber" class="field-error"></span>
+        </div>
+
+        <div class="id-field">
+            <label asp-for="FullName">Full name</label>
+            <input asp-for="FullName" placeholder="Juan Dela Cruz" autocomplete="name" required minlength="3" maxlength="120" />
+            <span asp-validation-for="FullName" class="field-error"></span>
+        </div>
+
+        <div class="field-row">
+            <div class="id-field">
+                <label asp-for="Email">School e-mail</label>
+                <input asp-for="Email" type="email" placeholder="you@@sti.edu.ph" autocomplete="email" required />
+                <span asp-validation-for="Email" class="field-error"></span>
+            </div>
+            <div class="id-field">
+                <label asp-for="MobileNumber">Mobile number</label>
+                <input asp-for="MobileNumber" placeholder="0917-555-0142" autocomplete="tel" />
+                <span asp-validation-for="MobileNumber" class="field-error"></span>
+            </div>
+        </div>
+
+        <div class="id-field">
+            <label asp-for="Program">Program</label>
+            <select asp-for="Program" required>
+                <option value="">Select your program…</option>
+                @foreach (var program in Model.AvailablePrograms)
+                {
+                    <option value="@program">@program</option>
+                }
+            </select>
+            <span asp-validation-for="Program" class="field-error"></span>
+        </div>
+
+        <div class="field-row">
+            <div class="id-field">
+                <label asp-for="YearLevel">Year level</label>
+                <select asp-for="YearLevel" required>
+                    <option value="">Select…</option>
+                    @for (var y = 1; y <= 5; y++)
+                    {
+                        <option value="@y">@y</option>
+                    }
+                </select>
+                <span asp-validation-for="YearLevel" class="field-error"></span>
+            </div>
+            <div class="id-field">
+                <label asp-for="Section">Section</label>
+                <input asp-for="Section" placeholder="IT-401" />
+                <span asp-validation-for="Section" class="field-error"></span>
+            </div>
+        </div>
+
+        <div class="field-row">
+            <div class="id-field">
+                <label asp-for="Password">Password</label>
+                <input asp-for="Password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8" maxlength="64" />
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
+            <div class="id-field">
+                <label asp-for="ConfirmPassword">Confirm password</label>
+                <input asp-for="ConfirmPassword" type="password" autocomplete="new-password" placeholder="Repeat it" required minlength="8" />
+                <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-teal btn-block">Create account</button>
+    </form>
+
+    <div class="login-foot">
+        Already registered? <a asp-action="Login">Sign in instead</a>
+    </div>
+</div>

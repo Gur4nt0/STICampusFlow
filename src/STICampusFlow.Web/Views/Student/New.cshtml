@@ -1,0 +1,184 @@
+@model DocumentPickerViewModel
+@{
+    ViewData["Title"] = "Request a document";
+    ViewData["Breadcrumb"] = "Step 1 of 2";
+
+    string CategoryLabel(DocumentCategory c) => c switch
+    {
+        DocumentCategory.Records => "Academic records",
+        DocumentCategory.Clearance => "Permits and clearances",
+        DocumentCategory.Certification => "Certifications",
+        _ => "Enrolment"
+    };
+}
+
+<div class="page-head">
+    <div>
+        <h1>What do you need from the registrar?</h1>
+        <p>
+            Pick one or more documents. You can raise the number of copies on each card.
+            The next screen lets you choose the date and time you will drop by.
+        </p>
+    </div>
+    <div class="step-chips">
+        <span class="step-chip active">1 · Documents</span>
+        <span class="step-chip">2 · Schedule</span>
+    </div>
+</div>
+
+<div class="cashier-note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div>
+        Documents with a fee must be paid at the <b>Cashier's Office</b> before the registrar
+        prepares them. Bring the official receipt together with your claim slip.
+    </div>
+</div>
+
+@foreach (var group in Model.Grouped)
+{
+    <div class="req-group">
+        <div class="req-group-label">@CategoryLabel(group.Key)</div>
+        <div class="req-grid">
+            @foreach (var doc in group)
+            {
+                var selected = Model.PreselectedIds.Contains(doc.Id);
+                <article class="req-card @(selected ? "selected" : "")"
+                         data-doc-id="@doc.Id"
+                         data-doc-name="@doc.Name"
+                         data-doc-fee="@doc.Fee.ToString("0.##")"
+                         data-max-copies="@doc.MaxCopies"
+                         tabindex="0" role="button" aria-pressed="@(selected ? "true" : "false")">
+                    <div class="req-top">
+                        <div class="req-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                        </div>
+                        <div class="req-check" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                    </div>
+
+                    <h4>@doc.Name <span class="doc-code">@doc.Code</span></h4>
+                    <p>@doc.Description</p>
+
+                    <div class="req-meta">
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            @doc.ProcessingDays working day@(doc.ProcessingDays == 1 ? "" : "s")
+                        </span>
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            @(doc.Fee > 0 ? $"₱{doc.Fee:N2} per copy" : "Free of charge")
+                        </span>
+                    </div>
+
+                    <div class="copies-row" data-stop>
+                        <span>Copies</span>
+                        <div class="stepper">
+                            <button type="button" class="step-btn" data-step="-1" aria-label="Fewer copies">−</button>
+                            <output class="step-value">1</output>
+                            <button type="button" class="step-btn" data-step="1" aria-label="More copies">+</button>
+                        </div>
+                        <small>max @doc.MaxCopies</small>
+                    </div>
+                </article>
+            }
+        </div>
+    </div>
+}
+
+<!-- Floating summary bar -->
+<div class="float-bar" id="floatBar">
+    <div class="fb-text">
+        <span id="fbCount">0 documents</span> · <span id="fbTotal">₱0.00</span>
+    </div>
+    <a class="btn btn-yellow" id="fbProceed" href="#">Choose a schedule →</a>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.req-card'));
+    var bar = document.getElementById('floatBar');
+    var fbCount = document.getElementById('fbCount');
+    var fbTotal = document.getElementById('fbTotal');
+    var proceed = document.getElementById('fbProceed');
+    var bookUrl = '@Url.Action("Book", "Student")';
+
+    function state(card) {
+        return {
+            id: card.dataset.docId,
+            fee: parseFloat(card.dataset.docFee) || 0,
+            max: parseInt(card.dataset.maxCopies, 10) || 1,
+            copies: parseInt(card.querySelector('.step-value').textContent, 10) || 1,
+            selected: card.classList.contains('selected')
+        };
+    }
+
+    function refresh() {
+        var chosen = cards.map(state).filter(function (s) { return s.selected; });
+        var docs = chosen.length;
+        var copies = chosen.reduce(function (sum, s) { return sum + s.copies; }, 0);
+        var total = chosen.reduce(function (sum, s) { return sum + s.fee * s.copies; }, 0);
+
+        fbCount.textContent = docs === 0
+            ? '0 documents'
+            : docs + ' document' + (docs === 1 ? '' : 's') + ' · ' + copies + ' cop' + (copies === 1 ? 'y' : 'ies');
+
+        fbTotal.textContent = '₱' + total.toFixed(2);
+
+        if (docs > 0) {
+            bar.classList.add('show');
+            bar.classList.remove('bump');
+            void bar.offsetWidth;          // restart the bump animation
+            bar.classList.add('bump');
+
+            var selection = chosen.map(function (s) { return s.id + ':' + s.copies; }).join(',');
+            proceed.href = bookUrl + '?selection=' + encodeURIComponent(selection);
+            proceed.removeAttribute('aria-disabled');
+        } else {
+            bar.classList.remove('show');
+            proceed.href = '#';
+            proceed.setAttribute('aria-disabled', 'true');
+        }
+    }
+
+    cards.forEach(function (card) {
+        function toggle() {
+            card.classList.toggle('selected');
+            card.setAttribute('aria-pressed', card.classList.contains('selected') ? 'true' : 'false');
+            refresh();
+        }
+
+        card.addEventListener('click', function (e) {
+            if (e.target.closest('[data-stop]')) return;   // the stepper handles its own clicks
+            toggle();
+        });
+
+        card.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+        });
+
+        card.querySelectorAll('.step-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var output = card.querySelector('.step-value');
+                var max = parseInt(card.dataset.maxCopies, 10) || 1;
+                var value = parseInt(output.textContent, 10) || 1;
+
+                value = Math.min(max, Math.max(1, value + parseInt(btn.dataset.step, 10)));
+                output.textContent = value;
+
+                // Bumping the copies implies you want the document.
+                if (!card.classList.contains('selected')) {
+                    card.classList.add('selected');
+                    card.setAttribute('aria-pressed', 'true');
+                }
+                refresh();
+            });
+        });
+    });
+
+    refresh();
+})();
+</script>
+}

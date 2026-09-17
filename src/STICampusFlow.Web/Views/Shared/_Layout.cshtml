@@ -1,0 +1,161 @@
+@{
+    var me = ViewBag.CurrentUser as User;
+    var unread = ViewBag.UnreadNotifications as int? ?? 0;
+    var isStaff = me?.IsStaff == true;
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+
+    bool Nav(string c, params string[] actions) =>
+        controller.Equals(c, StringComparison.OrdinalIgnoreCase) &&
+        (actions.Length == 0 || actions.Contains(action, StringComparer.OrdinalIgnoreCase));
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · STI CampusFlow</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
+</head>
+<body>
+<div class="app-shell">
+
+    <!-- ============ Sidebar ============ -->
+    <aside class="sidebar">
+        <a class="side-mark" href="@(isStaff ? Url.Action("Index", "Registrar") : Url.Action("Index", "Student"))" title="CampusFlow">CF</a>
+
+        @if (isStaff)
+        {
+            <a class="side-btn @(Nav("Registrar", "Index") ? "active" : "")" href="@Url.Action("Index", "Registrar")" title="Dashboard" aria-label="Dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+            </a>
+            <a class="side-btn @(Nav("Registrar", "Queue", "Details") ? "active" : "")" href="@Url.Action("Queue", "Registrar")" title="Request queue" aria-label="Request queue">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                @if (unread > 0) { <span class="dot"></span> }
+            </a>
+            <a class="side-btn @(Nav("Registrar", "Manifest") ? "active" : "")" href="@Url.Action("Manifest", "Registrar")" title="Daily manifest" aria-label="Daily manifest">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </a>
+            <a class="side-btn @(Nav("Registrar", "Schedule") ? "active" : "")" href="@Url.Action("Schedule", "Registrar")" title="Capacity &amp; closures" aria-label="Capacity and closures">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </a>
+        }
+        else
+        {
+            <a class="side-btn @(Nav("Student", "Index") ? "active" : "")" href="@Url.Action("Index", "Student")" title="Home" aria-label="Home">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </a>
+            <a class="side-btn @(Nav("Student", "New", "Book") ? "active" : "")" href="@Url.Action("New", "Student")" title="Request a document" aria-label="Request a document">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            </a>
+            <a class="side-btn @(Nav("Student", "Requests", "Details", "Confirmation") ? "active" : "")" href="@Url.Action("Requests", "Student")" title="My requests" aria-label="My requests">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                @if (unread > 0) { <span class="dot"></span> }
+            </a>
+        }
+
+        <div class="side-spacer"></div>
+
+        <form method="post" action="@Url.Action("Logout", "Account")" class="side-logout">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="side-btn" title="Sign out" aria-label="Sign out">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+        </form>
+        <div class="side-avatar" title="@me?.FullName">@me?.Initials</div>
+    </aside>
+
+    <!-- ============ Main column ============ -->
+    <div class="main-col">
+        <header class="topbar">
+            <div class="topbar-title">
+                @if (!string.IsNullOrEmpty(ViewData["Breadcrumb"] as string))
+                {
+                    @ViewData["Breadcrumb"]<text> / </text>
+                }
+                <b>@ViewData["Title"]</b>
+            </div>
+            <div class="topbar-right">
+                <details class="notif">
+                    <summary class="icon-btn" title="Notifications" aria-label="Notifications">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        @if (unread > 0) { <span class="notif-badge">@(unread > 9 ? "9+" : unread.ToString())</span> }
+                    </summary>
+                    <div class="notif-panel">
+                        <div class="notif-head">
+                            <b>Notifications</b>
+                            @if (unread > 0)
+                            {
+                                <form method="post" action="@Url.Action("ReadNotifications", isStaff ? "Registrar" : "Student")">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                    <button type="submit" class="link-btn">Mark all read</button>
+                                </form>
+                            }
+                        </div>
+                        @{
+                            var notifications = ViewBag.Notifications as List<Notification>;
+                        }
+                        @if (notifications == null || notifications.Count == 0)
+                        {
+                            <p class="notif-empty">Nothing new right now.</p>
+                        }
+                        else
+                        {
+                            <ul class="notif-list">
+                                @foreach (var n in notifications)
+                                {
+                                    <li class="@(n.IsRead ? "" : "is-unread")">
+                                        <a href="@(n.Link ?? "#")">
+                                            <b>@n.Title</b>
+                                            <span>@n.Message</span>
+                                            <em>@n.CreatedAt.ToString("MMM d, h:mm tt")</em>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </details>
+
+                <div class="who">
+                    <div>
+                        <div class="name">@me?.FullName</div>
+                        <div class="role">
+                            @(isStaff
+                                ? (me!.Role == UserRole.RegistrarHead ? "Registrar Head" : "Registrar Staff")
+                                : $"{me?.Program} · {me?.LoginId}")
+                        </div>
+                    </div>
+                    <div class="who-avatar">@me?.Initials</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="page">
+            @if (TempData["FlashMessage"] is string flash)
+            {
+                var type = TempData["FlashType"] as string ?? "success";
+                <div class="flash flash-@type" role="status">
+                    <span class="flash-icon" aria-hidden="true">
+                        @(type switch { "error" => "✕", "warning" => "!", _ => "✓" })
+                    </span>
+                    <span>@flash</span>
+                </div>
+            }
+
+            @RenderBody()
+        </main>
+    </div>
+</div>
+
+<script src="~/js/app.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

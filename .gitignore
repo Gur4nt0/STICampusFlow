@@ -1,0 +1,13 @@
+# .NET build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# SQLite demo database
+*.db
+*.db-shm
+*.db-wal

@@ -1,0 +1,166 @@
+@model RegistrarQueueViewModel
+@{
+    ViewData["Title"] = "Request queue";
+
+    var statuses = new (string Value, string Label)[]
+    {
+        ("open", "Active"), ("pending", "Pending"), ("approved", "Approved"),
+        ("processing", "Processing"), ("ready", "Ready"), ("released", "Released"),
+        ("rejected", "Rejected"), ("all", "All")
+    };
+
+    // Builds the query string for a link, keeping every active filter and changing
+    // only the status tab or the page number.
+    Dictionary<string, string> Route(string? status = null, int? page = null)
+    {
+        var d = new Dictionary<string, string>();
+
+        void Put(string key, string? value)
+        {
+            if (!string.IsNullOrWhiteSpace(value)) d[key] = value;
+        }
+
+        Put("search", Model.Search);
+        Put("status", status ?? Model.Status);
+        Put("from", Model.FromDate?.ToString("yyyy-MM-dd"));
+        Put("to", Model.ToDate?.ToString("yyyy-MM-dd"));
+        Put("documentTypeId", Model.DocumentTypeId?.ToString());
+        Put("sort", Model.Sort);
+
+        var target = page ?? Model.Page;
+        if (target > 1) Put("page", target.ToString());
+
+        return d;
+    }
+}
+
+<div class="page-head">
+    <div>
+        <h1>Request queue</h1>
+        <p>@Model.TotalCount result@(Model.TotalCount == 1 ? "" : "s") · @Model.CountPending pending · @Model.CountReady waiting at the counter</p>
+    </div>
+    <a class="btn btn-office" asp-action="Manifest">Today's manifest</a>
+</div>
+
+<!-- ===== Filters ===== -->
+<form method="get" asp-action="Queue" class="filter-bar" id="filterForm">
+    <div class="filter-search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" name="search" value="@Model.Search"
+               placeholder="Search name, 11-digit student number or reference code…" />
+    </div>
+
+    <select name="documentTypeId" onchange="this.form.submit()">
+        <option value="">All documents</option>
+        @foreach (var doc in Model.DocumentTypes)
+        {
+            <option value="@doc.Id" selected="@(Model.DocumentTypeId == doc.Id)">@doc.Code — @doc.Name</option>
+        }
+    </select>
+
+    <input type="date" name="from" value="@Model.FromDate?.ToString("yyyy-MM-dd")" aria-label="From date" onchange="this.form.submit()" />
+    <input type="date" name="to" value="@Model.ToDate?.ToString("yyyy-MM-dd")" aria-label="To date" onchange="this.form.submit()" />
+
+    <select name="sort" onchange="this.form.submit()">
+        <option value="date" selected="@(Model.Sort == "date")">Sort: appointment date</option>
+        <option value="submitted" selected="@(Model.Sort == "submitted")">Sort: recently submitted</option>
+        <option value="oldest" selected="@(Model.Sort == "oldest")">Sort: oldest appointment</option>
+        <option value="name" selected="@(Model.Sort == "name")">Sort: student name</option>
+        <option value="status" selected="@(Model.Sort == "status")">Sort: status</option>
+    </select>
+
+    <input type="hidden" name="status" value="@Model.Status" />
+    <button type="submit" class="btn btn-teal">Apply</button>
+    <a class="btn btn-ghost" asp-action="Queue">Reset</a>
+</form>
+
+<div class="filter-tabs">
+    @foreach (var s in statuses)
+    {
+        <a class="filter-tab @(Model.Status == s.Value ? "active" : "")"
+           asp-action="Queue" asp-all-route-data="@Route(status: s.Value, page: 1)">
+            @s.Label
+            @if (s.Value == "pending") { <span>@Model.CountPending</span> }
+            else if (s.Value == "ready") { <span>@Model.CountReady</span> }
+            else if (s.Value == "all") { <span>@Model.CountAll</span> }
+        </a>
+    }
+</div>
+
+@if (Model.Requests.Count == 0)
+{
+    <div class="empty-state">
+        <p class="empty-note">No requests match these filters.</p>
+        <a class="btn btn-office" asp-action="Queue">Clear filters</a>
+    </div>
+}
+else
+{
+    <form method="post" asp-action="BulkApprove" id="bulkForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th class="check-col"><input type="checkbox" id="checkAll" aria-label="Select all" /></th>
+                    <th>Reference</th>
+                    <th>Student</th>
+                    <th>Documents</th>
+                    <th>Appointment</th>
+                    <th class="num">Fee</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var request in Model.Requests)
+                {
+                    <tr class="@(request.AppointmentDate == DateTime.Today ? "row-today" : "")">
+                        <td class="check-col">
+                            @if (request.Status == RequestStatus.Pending)
+                            {
+                                <input type="checkbox" name="ids" value="@request.Id" class="row-check" aria-label="Select @request.ReferenceCode" />
+                            }
+                        </td>
+                        <td class="nowrap"><code class="ref-chip">@request.ReferenceCode</code></td>
+                        <td>
+                            <div class="cell-strong">@request.Student.FullName</div>
+                            <div class="cell-sub">@request.Student.LoginId · @request.Student.Program</div>
+                        </td>
+                        <td>
+                            <div class="cell-strong">@request.DocumentSummary</div>
+                            <div class="cell-sub">@request.TotalCopies cop@(request.TotalCopies == 1 ? "y" : "ies")</div>
+                        </td>
+                        <td class="nowrap">
+                            <div class="cell-strong">@request.AppointmentDate.ToString("MMM d, yyyy")</div>
+                            <div class="cell-sub">@DateTime.Today.Add(request.SlotStart).ToString("h:mm tt")</div>
+                        </td>
+                        <td class="num nowrap">@(request.TotalFee > 0 ? request.TotalFee.ToString("N2") : "—")</td>
+                        <td><partial name="_StatusPill" model="request.Status" /></td>
+                        <td class="nowrap"><a class="btn-link" asp-action="Details" asp-route-id="@request.Id">Open</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <button type="submit" class="btn btn-teal bulk-btn" id="bulkBtn" disabled>Approve selected</button>
+    </form>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav class="pager">
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-office" asp-action="Queue" asp-all-route-data="@Route(page: Model.Page - 1)">← Previous</a>
+            }
+            <span class="pager-info">Page @Model.Page of @Model.TotalPages</span>
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-office" asp-action="Queue" asp-all-route-data="@Route(page: Model.Page + 1)">Next →</a>
+            }
+        </nav>
+    }
+}

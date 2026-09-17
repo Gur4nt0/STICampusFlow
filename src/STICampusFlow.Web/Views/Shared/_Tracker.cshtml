@@ -1,0 +1,78 @@
+@model DocumentRequest
+@{
+    // The tracker only makes sense for the happy path. Rejected / cancelled / no-show
+    // requests get a single explanatory banner instead.
+    var terminated = Model.Status is RequestStatus.Rejected or RequestStatus.Cancelled or RequestStatus.NoShow;
+
+    var steps = new List<TrackerStep>
+    {
+        new()
+        {
+            Label = "Submitted",
+            Caption = "Waiting for the registrar to review",
+            At = Model.CreatedAt,
+            IsDone = true
+        },
+        new()
+        {
+            Label = "Approved",
+            Caption = "Requirements verified, slot confirmed",
+            At = Model.ApprovedAt,
+            IsDone = Model.Status >= RequestStatus.Approved && Model.Status <= RequestStatus.Released
+        },
+        new()
+        {
+            Label = "Ready for pickup",
+            Caption = "Waiting at the registrar counter",
+            At = Model.ReadyAt,
+            IsDone = Model.Status is RequestStatus.ReadyForPickup or RequestStatus.Released
+        },
+        new()
+        {
+            Label = "Released",
+            Caption = "Claimed by the student",
+            At = Model.ReleasedAt,
+            IsDone = Model.Status == RequestStatus.Released
+        }
+    };
+
+    var currentIndex = steps.FindLastIndex(s => s.IsDone);
+    if (currentIndex >= 0 && currentIndex < steps.Count - 1) steps[currentIndex + 1].IsCurrent = true;
+}
+
+@if (terminated)
+{
+    <div class="tracker-closed tracker-closed-@Model.Status.ToString().ToLowerInvariant()">
+        <b>@Model.Status.ToDisplayName()</b>
+        @{
+            var closedMessage = Model.Status switch
+            {
+                RequestStatus.Rejected => Model.RejectionReason ?? "The registrar declined this request.",
+                RequestStatus.Cancelled => "You cancelled this appointment. You can book a new one any time.",
+                _ => "The appointment date passed without the document being claimed. Please book again."
+            };
+        }
+        <p>@closedMessage</p>
+    </div>
+}
+else
+{
+    <ol class="tracker">
+        @for (var i = 0; i < steps.Count; i++)
+        {
+            var step = steps[i];
+            var cls = step.IsDone ? "is-done" : step.IsCurrent ? "is-current" : "";
+            <li class="tracker-step @cls">
+                <span class="tracker-dot">@(step.IsDone ? "✓" : (i + 1).ToString())</span>
+                <div class="tracker-body">
+                    <b>@step.Label</b>
+                    <span>@step.Caption</span>
+                    @if (step.At.HasValue)
+                    {
+                        <em>@step.At.Value.ToString("MMM d, yyyy · h:mm tt")</em>
+                    }
+                </div>
+            </li>
+        }
+    </ol>
+}

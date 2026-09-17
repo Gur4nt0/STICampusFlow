@@ -1,0 +1,113 @@
+@model DocumentRequest
+@{
+    ViewData["Title"] = Model.ReferenceCode;
+    ViewData["Breadcrumb"] = "My requests";
+}
+
+<div class="page-head">
+    <div>
+        <h1>@Model.DocumentSummary</h1>
+        <p>
+            Reference <b>@Model.ReferenceCode</b> · submitted @Model.CreatedAt.ToString("MMMM d, yyyy 'at' h:mm tt")
+        </p>
+    </div>
+    <div class="head-actions">
+        <partial name="_StatusPill" model="Model.Status" />
+        <a class="btn btn-office" asp-action="Slip" asp-route-id="@Model.Id" target="_blank" rel="noopener">Print claim slip</a>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <!-- ===== Left: tracker + timeline ===== -->
+    <section class="panel">
+        <h3>Progress</h3>
+        <partial name="_Tracker" model="Model" />
+
+        <div class="summary-divider"></div>
+
+        <h3>Activity log</h3>
+        <ul class="timeline">
+            @foreach (var entry in Model.History.OrderByDescending(h => h.ChangedAt))
+            {
+                <li>
+                    <span class="timeline-dot"></span>
+                    <div>
+                        <b>
+                            @(entry.FromStatus is null
+                                ? "Request submitted"
+                                : $"{entry.FromStatus.Value.ToDisplayName()} → {entry.ToStatus.ToDisplayName()}")
+                        </b>
+                        @if (!string.IsNullOrWhiteSpace(entry.Note))
+                        {
+                            <p>@entry.Note</p>
+                        }
+                        <em>
+                            @entry.ChangedAt.ToString("MMM d, yyyy · h:mm tt")
+                            @if (entry.ChangedBy is not null && entry.ChangedBy.IsStaff)
+                            {
+                                <text> · @entry.ChangedBy.FullName</text>
+                            }
+                        </em>
+                    </div>
+                </li>
+            }
+        </ul>
+    </section>
+
+    <!-- ===== Right: the details ===== -->
+    <aside class="panel">
+        <h3>Appointment</h3>
+        <div class="summary-row"><span>Date</span><b>@Model.AppointmentDate.ToString("dddd, MMM d, yyyy")</b></div>
+        <div class="summary-row"><span>Time</span><b>@Model.SlotLabel</b></div>
+        <div class="summary-row"><span>Where</span><b>Office of the Registrar</b></div>
+
+        <div class="summary-divider"></div>
+
+        <h3>Documents</h3>
+        <div class="summary-list">
+            @foreach (var item in Model.Items)
+            {
+                <div class="summary-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <div class="summary-item-body">
+                        <b>@item.DocumentType.Name</b>
+                        <span>@item.Copies cop@(item.Copies == 1 ? "y" : "ies") · @(item.UnitFee > 0 ? $"₱{item.LineTotal:N2}" : "Free")</span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="summary-row" style="margin-top:14px"><span>Total fee</span><b>@(Model.TotalFee > 0 ? $"₱{Model.TotalFee:N2}" : "Free")</b></div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Purpose))
+        {
+            <div class="summary-divider"></div>
+            <h3>Purpose</h3>
+            <p class="muted-text">@Model.Purpose</p>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.StudentNote))
+        {
+            <h3 style="margin-top:14px">Your note</h3>
+            <p class="muted-text">@Model.StudentNote</p>
+        }
+
+        @if (Model.Status == RequestStatus.Rejected && !string.IsNullOrWhiteSpace(Model.RejectionReason))
+        {
+            <div class="inline-alert inline-alert-error">
+                <b>Why it was declined</b>
+                <p>@Model.RejectionReason</p>
+            </div>
+        }
+
+        @if (Model.CanBeCancelledByStudent)
+        {
+            <div class="summary-divider"></div>
+            <form method="post" asp-action="Cancel" asp-route-id="@Model.Id"
+                  onsubmit="return confirm('Cancel this appointment? You will need to book again.');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-office btn-block btn-danger-ghost">Cancel this appointment</button>
+            </form>
+        }
+    </aside>
+</div>

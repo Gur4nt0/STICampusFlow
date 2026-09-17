@@ -1,0 +1,261 @@
+@model DocumentRequest
+@{
+    ViewData["Title"] = Model.ReferenceCode;
+    ViewData["Breadcrumb"] = "Queue";
+
+    var history = ViewBag.StudentHistory as List<DocumentRequest> ?? new List<DocumentRequest>();
+    var allowed = Model.Status.AllowedNextStatuses();
+
+    bool Can(RequestStatus s) => allowed.Contains(s);
+}
+
+<div class="page-head">
+    <div>
+        <h1>@Model.Student.FullName</h1>
+        <p>
+            <code class="ref-chip">@Model.ReferenceCode</code>
+            · @Model.Student.LoginId
+            · @Model.Student.Program, Year @Model.Student.YearLevel @Model.Student.Section
+        </p>
+    </div>
+    <div class="head-actions">
+        <partial name="_StatusPill" model="Model.Status" />
+        <a class="btn btn-office" asp-action="Slip" asp-route-id="@Model.Id" target="_blank" rel="noopener">Print office copy</a>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <!-- ===== Left column ===== -->
+    <section>
+        <div class="panel">
+            <h3>Requested documents</h3>
+            <div class="table-wrap">
+                <table class="data-table compact">
+                    <thead>
+                    <tr><th>Code</th><th>Document</th><th class="num">Copies</th><th class="num">Unit</th><th class="num">Amount</th><th>Processing</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td><code class="ref-chip">@item.DocumentType.Code</code></td>
+                            <td>@item.DocumentType.Name</td>
+                            <td class="num">@item.Copies</td>
+                            <td class="num">@(item.UnitFee > 0 ? item.UnitFee.ToString("N2") : "—")</td>
+                            <td class="num">@(item.LineTotal > 0 ? item.LineTotal.ToString("N2") : "—")</td>
+                            <td class="nowrap">@item.DocumentType.ProcessingDays day@(item.DocumentType.ProcessingDays == 1 ? "" : "s")</td>
+                        </tr>
+                    }
+                    </tbody>
+                    <tfoot>
+                    <tr><td colspan="4" class="num"><b>Total</b></td><td class="num"><b>@(Model.TotalFee > 0 ? $"₱{Model.TotalFee:N2}" : "Free")</b></td><td></td></tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            @if (Model.TotalFee > 0)
+            {
+                <div class="cashier-note">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <div>Verify the Cashier's receipt for ₱@Model.TotalFee.ToString("N2") before releasing.</div>
+                </div>
+            }
+        </div>
+
+        <!-- ===== Actions ===== -->
+        <div class="panel">
+            <h3>Actions</h3>
+
+            @if (allowed.Length == 0)
+            {
+                <p class="empty-note">
+                    This request is closed (@Model.Status.ToDisplayName()) and can no longer be changed.
+                </p>
+            }
+            else
+            {
+                <p class="panel-sub">
+                    From <b>@Model.Status.ToDisplayName()</b> you can move this request to:
+                    @(string.Join(", ", allowed.Select(a => a.ToDisplayName())))
+                </p>
+
+                <div class="action-row">
+                    @if (Can(RequestStatus.Approved))
+                    {
+                        <form method="post" asp-action="Approve" asp-route-id="@Model.Id" class="action-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="note" value="Requirements verified." />
+                            <button type="submit" class="btn btn-teal">✓ Approve</button>
+                        </form>
+                    }
+                    @if (Can(RequestStatus.Processing))
+                    {
+                        <form method="post" asp-action="StartProcessing" asp-route-id="@Model.Id" class="action-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="note" value="Document is being prepared." />
+                            <button type="submit" class="btn btn-office">Start processing</button>
+                        </form>
+                    }
+                    @if (Can(RequestStatus.ReadyForPickup))
+                    {
+                        <form method="post" asp-action="MarkReady" asp-route-id="@Model.Id" class="action-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="note" value="Signed and waiting at the counter." />
+                            <button type="submit" class="btn btn-yellow">Mark ready for pickup</button>
+                        </form>
+                    }
+                    @if (Can(RequestStatus.Released))
+                    {
+                        <form method="post" asp-action="Release" asp-route-id="@Model.Id" class="action-form"
+                              onsubmit="return confirm('Confirm that the student has claimed this document?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="note" value="Claimed at the counter." />
+                            <button type="submit" class="btn btn-teal">Release to student</button>
+                        </form>
+                    }
+                    @if (Can(RequestStatus.NoShow))
+                    {
+                        <form method="post" asp-action="MarkNoShow" asp-route-id="@Model.Id" class="action-form"
+                              onsubmit="return confirm('Mark this appointment as missed?');">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="note" value="Student did not show up." />
+                            <button type="submit" class="btn btn-office">Mark as no-show</button>
+                        </form>
+                    }
+                </div>
+
+                @if (Can(RequestStatus.Rejected))
+                {
+                    <details class="reject-box">
+                        <summary>Decline this request</summary>
+                        <form method="post" asp-action="Reject" asp-route-id="@Model.Id">
+                            @Html.AntiForgeryToken()
+                            <div class="id-field">
+                                <label for="rejectNote">Reason (the student will see this)</label>
+                                <textarea id="rejectNote" name="note" rows="3" required
+                                          placeholder="e.g. Outstanding balance with the Cashier. Please settle first."></textarea>
+                            </div>
+                            <div class="reason-chips">
+                                <button type="button" class="chip" data-reason="Outstanding balance with the Cashier. Please settle first.">Unpaid balance</button>
+                                <button type="button" class="chip" data-reason="Incomplete requirements. Please attach the missing documents.">Incomplete requirements</button>
+                                <button type="button" class="chip" data-reason="Duplicate request. An identical request is already being processed.">Duplicate</button>
+                                <button type="button" class="chip" data-reason="Student record is on hold pending library clearance.">Record on hold</button>
+                            </div>
+                            <button type="submit" class="btn btn-danger">Decline request</button>
+                        </form>
+                    </details>
+                }
+            }
+        </div>
+
+        <!-- ===== Activity log ===== -->
+        <div class="panel">
+            <h3>Activity log</h3>
+            <ul class="timeline">
+                @foreach (var entry in Model.History.OrderByDescending(h => h.ChangedAt))
+                {
+                    <li>
+                        <span class="timeline-dot"></span>
+                        <div>
+                            <b>
+                                @(entry.FromStatus is null
+                                    ? "Request submitted"
+                                    : $"{entry.FromStatus.Value.ToDisplayName()} → {entry.ToStatus.ToDisplayName()}")
+                            </b>
+                            @if (!string.IsNullOrWhiteSpace(entry.Note))
+                            {
+                                <p>@entry.Note</p>
+                            }
+                            <em>
+                                @entry.ChangedAt.ToString("MMM d, yyyy · h:mm tt")
+                                @if (entry.ChangedBy is not null)
+                                {
+                                    <text> · @entry.ChangedBy.FullName</text>
+                                }
+                                else
+                                {
+                                    <text> · system</text>
+                                }
+                            </em>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===== Right column ===== -->
+    <aside>
+        <div class="panel">
+            <h3>Appointment</h3>
+            <div class="summary-row"><span>Date</span><b>@Model.AppointmentDate.ToString("ddd, MMM d, yyyy")</b></div>
+            <div class="summary-row"><span>Window</span><b>@Model.SlotLabel</b></div>
+            <div class="summary-row"><span>Submitted</span><b>@Model.CreatedAt.ToString("MMM d, h:mm tt")</b></div>
+            <div class="summary-row"><span>Last update</span><b>@Model.UpdatedAt.ToString("MMM d, h:mm tt")</b></div>
+            @if (Model.ProcessedBy is not null)
+            {
+                <div class="summary-row"><span>Handled by</span><b>@Model.ProcessedBy.FullName</b></div>
+            }
+        </div>
+
+        <div class="panel">
+            <h3>Student</h3>
+            <div class="summary-row"><span>Name</span><b>@Model.Student.FullName</b></div>
+            <div class="summary-row"><span>Student no.</span><b>@Model.Student.LoginId</b></div>
+            <div class="summary-row"><span>Program</span><b>@Model.Student.Program</b></div>
+            <div class="summary-row"><span>Year / section</span><b>@Model.Student.YearLevel · @Model.Student.Section</b></div>
+            <div class="summary-row"><span>E-mail</span><b>@Model.Student.Email</b></div>
+            <div class="summary-row"><span>Mobile</span><b>@(Model.Student.MobileNumber ?? "—")</b></div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Purpose) || !string.IsNullOrWhiteSpace(Model.StudentNote))
+        {
+            <div class="panel">
+                <h3>From the student</h3>
+                @if (!string.IsNullOrWhiteSpace(Model.Purpose))
+                {
+                    <p class="muted-text"><b>Purpose:</b> @Model.Purpose</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.StudentNote))
+                {
+                    <p class="muted-text">“@Model.StudentNote”</p>
+                }
+            </div>
+        }
+
+        <div class="panel">
+            <h3>Other requests by this student</h3>
+            @if (history.Count == 0)
+            {
+                <p class="empty-note">This is their first request.</p>
+            }
+            else
+            {
+                <ul class="mini-list">
+                    @foreach (var other in history)
+                    {
+                        <li>
+                            <a asp-action="Details" asp-route-id="@other.Id">
+                                <b>@other.ReferenceCode</b>
+                                <span>@other.AppointmentDate.ToString("MMM d, yyyy")</span>
+                            </a>
+                            <partial name="_StatusPill" model="other.Status" />
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </aside>
+</div>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('.reason-chips .chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            var box = document.getElementById('rejectNote');
+            box.value = chip.dataset.reason;
+            box.focus();
+        });
+    });
+</script>
+}

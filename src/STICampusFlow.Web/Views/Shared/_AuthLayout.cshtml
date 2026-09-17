@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] · STI CampusFlow</title>
+    <link rel="icon" href="~/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+</head>
+<body>
+<div class="login-shell">
+    <div class="login-bg" aria-hidden="true"></div>
+
+    <div class="hero-topbar">
+        <div class="hero-mark">CF</div>
+        <div class="hero-brand">
+            STI CampusFlow
+            <span>Office of the Registrar · Global City</span>
+        </div>
+    </div>
+
+    <div class="hero-copy">
+        <h1>Book the registrar. Skip the queue.</h1>
+        <p>
+            Request your transcript, certificate of enrolment or exam permit online,
+            pick a time that fits your class schedule, and track it until it is ready for pickup.
+        </p>
+    </div>
+
+    <div class="hero-stats">
+        <div class="hero-stat"><b>8AM–5PM</b><span>Mon to Fri</span></div>
+        <div class="hero-stat"><b>10</b><span>Documents offered</span></div>
+        <div class="hero-stat"><b>&lt; 3 min</b><span>Average booking</span></div>
+    </div>
+
+    <div class="login-card-wrap">
+        @RenderBody()
+    </div>
+
+    <div class="login-copyright">© @DateTime.Now.Year STI College Global City</div>
+</div>
+
+<script src="~/js/app.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

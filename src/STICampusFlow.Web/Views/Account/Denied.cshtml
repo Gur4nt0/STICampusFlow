@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Access denied";
+    Layout = "_AuthLayout";
+}
+
+<div class="login-card">
+    <div class="kicker">STI CampusFlow</div>
+    <h2>You cannot open that page</h2>
+    <p class="sub">
+        That area belongs to a different role. Student accounts cannot open the registrar
+        console, and staff accounts cannot book appointments for themselves.
+    </p>
+    <a class="btn btn-teal btn-block" asp-controller="Home" asp-action="Index">Back to my dashboard</a>
+    <form method="post" asp-action="Logout" style="margin-top:10px">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-office btn-block">Sign in as someone else</button>
+    </form>
+</div>

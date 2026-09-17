@@ -1,0 +1,292 @@
+@model BookingViewModel
+@{
+    ViewData["Title"] = "Choose a schedule";
+    ViewData["Breadcrumb"] = "Step 2 of 2";
+
+    var cursor = new DateTime(Model.CalendarYear, Model.CalendarMonth, 1);
+    var leadingPad = (int)cursor.DayOfWeek;             // Sunday-first grid
+    var prev = cursor.AddMonths(-1);
+    var next = cursor.AddMonths(1);
+
+    var canGoBack = prev >= new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    var canGoForward = next <= new DateTime(Model.LatestDate.Year, Model.LatestDate.Month, 1);
+
+    string MonthUrl(DateTime m) =>
+        Url.Action("Book", "Student", new { selection = Model.Selection, year = m.Year, month = m.Month })!;
+
+    string DayUrl(DateTime d) =>
+        Url.Action("Book", "Student", new { selection = Model.Selection, year = d.Year, month = d.Month, date = d.ToString("yyyy-MM-dd") })!;
+}
+
+<div class="page-head">
+    <div>
+        <h1>When can you drop by?</h1>
+        <p>
+            The registrar serves students from 8:00 AM to 5:00 PM on weekdays, with a lunch break
+            from 12:00 to 1:00 PM. Greyed-out dates are weekends, holidays or already full.
+        </p>
+    </div>
+    <div class="step-chips">
+        <a class="step-chip" asp-action="New" asp-route-selection="@Model.Selection">1 · Documents</a>
+        <span class="step-chip active">2 · Schedule</span>
+    </div>
+</div>
+
+<form method="post" asp-action="Book" id="bookingForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Selection" />
+    <input type="hidden" asp-for="AppointmentDate" asp-format="{0:yyyy-MM-dd}" id="appointmentDateField" />
+    <input type="hidden" asp-for="SlotStart" id="slotStartField" />
+
+    <div asp-validation-summary="ModelOnly" class="form-errors form-errors-block"></div>
+
+    <div class="booking-grid">
+        <!-- ============ Calendar + slots ============ -->
+        <section class="panel">
+            <div class="cal-head">
+                <div class="cal-month" id="calMonthLabel">@cursor.ToString("MMMM yyyy")</div>
+                <div class="cal-nav">
+                    <a class="cal-nav-btn @(canGoBack ? "" : "is-disabled")"
+                       href="@(canGoBack ? MonthUrl(prev) : "#")"
+                       data-month-nav="@prev.ToString("yyyy-MM")"
+                       aria-label="Previous month">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </a>
+                    <a class="cal-nav-btn @(canGoForward ? "" : "is-disabled")"
+                       href="@(canGoForward ? MonthUrl(next) : "#")"
+                       data-month-nav="@next.ToString("yyyy-MM")"
+                       aria-label="Next month">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="cal-weekdays">
+                <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+
+            <div class="cal-grid" id="calGrid">
+                @for (var i = 0; i < leadingPad; i++)
+                {
+                    <span class="cal-day pad"></span>
+                }
+
+                @foreach (var day in Model.Days)
+                {
+                    var isSelected = Model.AppointmentDate?.Date == day.Date;
+                    var classes = "cal-day";
+                    if (day.IsSelectable) classes += " open";
+                    else classes += " disabled";
+                    if (isSelected) classes += " selected";
+                    if (day.Date == DateTime.Today) classes += " today";
+                    if (day.IsAlmostFull) classes += " limited";
+                    if (day.IsFull) classes += " full";
+
+                    var title = day.IsSelectable
+                        ? $"{day.Remaining} slot(s) left"
+                        : day.ClosedReason ?? "Fully booked";
+
+                    if (day.IsSelectable)
+                    {
+                        <a class="@classes"
+                           href="@DayUrl(day.Date)"
+                           data-date="@day.Date.ToString("yyyy-MM-dd")"
+                           title="@title">@day.Date.Day</a>
+                    }
+                    else
+                    {
+                        <span class="@classes" title="@title" aria-disabled="true">@day.Date.Day</span>
+                    }
+                }
+            </div>
+
+            <div class="cal-legend">
+                <span><i style="background:var(--teal)"></i> Selected</span>
+                <span><i style="background:var(--bg);border:1px solid var(--border)"></i> Open</span>
+                <span><i style="background:var(--warn-bg);border:1px solid #F0DDAF"></i> Almost full</span>
+                <span><i style="background:#EDEFF5"></i> Closed / full</span>
+            </div>
+
+            <!-- ============ Time slots ============ -->
+            <div class="slot-wrap" id="slotWrap">
+                @if (Model.AppointmentDate is null)
+                {
+                    <p class="hint" id="slotHint">Pick a date above to see the available time slots.</p>
+                    <div class="slot-grid" id="slotGrid"></div>
+                }
+                else
+                {
+                    <p class="hint" id="slotHint">
+                        Available windows for <b>@Model.AppointmentDate.Value.ToString("dddd, MMMM d")</b>
+                    </p>
+                    <div class="slot-grid" id="slotGrid">
+                        @foreach (var slot in Model.Slots)
+                        {
+                            var isPicked = Model.SlotStart == slot.Value;
+                            <button type="button"
+                                    class="slot-btn @(isPicked ? "selected" : "")"
+                                    data-slot="@slot.Value"
+                                    data-range="@slot.RangeLabel"
+                                    title="@(slot.IsSelectable ? $"{slot.Remaining} of {slot.Capacity} left" : slot.BlockedReason)"
+                                    disabled="@(!slot.IsSelectable)">
+                                @slot.Label
+                                <small>@(slot.IsSelectable ? $"{slot.Remaining} left" : "full")</small>
+                            </button>
+                        }
+                    </div>
+                }
+                <span asp-validation-for="SlotStart" class="field-error"></span>
+            </div>
+        </section>
+
+        <!-- ============ Summary ============ -->
+        <aside class="panel summary-panel">
+            <h3>Your request</h3>
+
+            <div class="summary-list">
+                @foreach (var line in Model.Lines)
+                {
+                    <div class="summary-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <div class="summary-item-body">
+                            <b>@line.Document.Name</b>
+                            <span>@line.Copies cop@(line.Copies == 1 ? "y" : "ies") · @(line.Document.Fee > 0 ? $"₱{line.LineTotal:N2}" : "Free")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-row"><span>Date</span><b id="sumDate">@(Model.AppointmentDate?.ToString("MMM d, yyyy") ?? "Not selected")</b></div>
+            <div class="summary-row"><span>Time</span><b id="sumTime">@(Model.Slots.FirstOrDefault(s => s.Value == Model.SlotStart)?.RangeLabel ?? "Not selected")</b></div>
+            <div class="summary-row"><span>Processing</span><b>@Model.LongestProcessing working day@(Model.LongestProcessing == 1 ? "" : "s")</b></div>
+            <div class="summary-row"><span>Total fee</span><b>@(Model.TotalFee > 0 ? $"₱{Model.TotalFee:N2}" : "Free")</b></div>
+
+            <div class="summary-divider"></div>
+
+            <div class="id-field">
+                <label asp-for="Purpose">What is it for?</label>
+                <select asp-for="Purpose" required>
+                    <option value="">Select a purpose…</option>
+                    @foreach (var option in Model.PurposeOptions)
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </select>
+                <span asp-validation-for="Purpose" class="field-error"></span>
+            </div>
+
+            <div class="id-field">
+                <label asp-for="StudentNote">Note for the registrar <span class="optional">optional</span></label>
+                <textarea asp-for="StudentNote" rows="3" maxlength="600" placeholder="e.g. I need it before Friday for my PRC application."></textarea>
+                <span asp-validation-for="StudentNote" class="field-error"></span>
+            </div>
+
+            @if (Model.AnyPaid)
+            {
+                <div class="cashier-note" style="margin-top:4px">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <div>Pay ₱@Model.TotalFee.ToString("N2") at the Cashier before your appointment.</div>
+                </div>
+            }
+
+            <button type="submit" class="btn btn-teal btn-block" id="submitBooking"
+                    disabled="@(Model.AppointmentDate is null || string.IsNullOrEmpty(Model.SlotStart))">
+                Confirm booking
+            </button>
+            <a class="btn btn-ghost btn-block" asp-action="New" asp-route-selection="@Model.Selection">← Change documents</a>
+        </aside>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+(function () {
+    var dateField = document.getElementById('appointmentDateField');
+    var slotField = document.getElementById('slotStartField');
+    var slotGrid = document.getElementById('slotGrid');
+    var slotHint = document.getElementById('slotHint');
+    var sumDate = document.getElementById('sumDate');
+    var sumTime = document.getElementById('sumTime');
+    var submit = document.getElementById('submitBooking');
+    var grid = document.getElementById('calGrid');
+
+    function syncSubmit() {
+        submit.disabled = !(dateField.value && slotField.value);
+    }
+
+    function bindSlotButtons() {
+        slotGrid.querySelectorAll('.slot-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (btn.disabled) return;
+                slotGrid.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
+                btn.classList.add('selected');
+                slotField.value = btn.dataset.slot;
+                sumTime.textContent = btn.dataset.range || btn.textContent.trim().split('\n')[0];
+                syncSubmit();
+            });
+        });
+    }
+
+    function renderSlots(payload) {
+        slotHint.innerHTML = 'Available windows for <b>' + payload.label + '</b>';
+        slotGrid.innerHTML = '';
+
+        if (!payload.slots.length) {
+            slotGrid.innerHTML = '<p class="hint">No windows are configured for this date.</p>';
+            return;
+        }
+
+        payload.slots.forEach(function (slot) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'slot-btn';
+            btn.dataset.slot = slot.value;
+            btn.dataset.range = slot.range;
+            btn.title = slot.selectable ? (slot.remaining + ' of ' + slot.capacity + ' left') : (slot.reason || 'Unavailable');
+            btn.disabled = !slot.selectable;
+            btn.innerHTML = slot.label + '<small>' + (slot.selectable ? slot.remaining + ' left' : 'full') + '</small>';
+            slotGrid.appendChild(btn);
+        });
+
+        bindSlotButtons();
+    }
+
+    // Picking a date fetches its slots instead of reloading the whole page.
+    // The plain href on each day still works if JavaScript is unavailable.
+    grid.addEventListener('click', function (e) {
+        var day = e.target.closest('a.cal-day');
+        if (!day) return;
+
+        e.preventDefault();
+
+        grid.querySelectorAll('.cal-day').forEach(function (d) { d.classList.remove('selected'); });
+        day.classList.add('selected');
+
+        dateField.value = day.dataset.date;
+        slotField.value = '';
+        sumTime.textContent = 'Not selected';
+        syncSubmit();
+
+        var parts = day.dataset.date.split('-');
+        sumDate.textContent = new Date(parts[0], parts[1] - 1, parts[2])
+            .toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+        slotHint.textContent = 'Loading available windows…';
+        slotGrid.innerHTML = '';
+
+        fetch('/api/slots?date=' + encodeURIComponent(day.dataset.date), { headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+            .then(renderSlots)
+            .catch(function () {
+                // Fall back to a full page load so the student is never stuck.
+                window.location.href = day.href;
+            });
+    });
+
+    bindSlotButtons();
+    syncSubmit();
+})();
+</script>
+}

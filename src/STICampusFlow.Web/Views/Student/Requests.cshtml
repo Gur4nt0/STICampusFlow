@@ -1,0 +1,57 @@
+@model RequestListViewModel
+@{
+    ViewData["Title"] = "My requests";
+}
+
+<div class="page-head">
+    <div>
+        <h1>My requests</h1>
+        <p>Everything you have asked the registrar for, newest appointment first.</p>
+    </div>
+    <a class="btn btn-teal" asp-action="New">+ New request</a>
+</div>
+
+<div class="filter-tabs">
+    <a class="filter-tab @(Model.Filter == "all" ? "active" : "")" asp-action="Requests" asp-route-filter="all">
+        All <span>@(Model.OpenCount + Model.ClosedCount)</span>
+    </a>
+    <a class="filter-tab @(Model.Filter == "open" ? "active" : "")" asp-action="Requests" asp-route-filter="open">
+        Active <span>@Model.OpenCount</span>
+    </a>
+    <a class="filter-tab @(Model.Filter == "closed" ? "active" : "")" asp-action="Requests" asp-route-filter="closed">
+        Finished <span>@Model.ClosedCount</span>
+    </a>
+</div>
+
+@if (Model.Requests.Count == 0)
+{
+    <div class="empty-state">
+        <p class="empty-note">Nothing here yet.</p>
+        <a class="btn btn-teal" asp-action="New">Request a document</a>
+    </div>
+}
+else
+{
+    <div class="appt-list">
+        @foreach (var request in Model.Requests)
+        {
+            <a class="appt-mini" asp-action="Details" asp-route-id="@request.Id">
+                <div class="date-chip">
+                    <div class="mo">@request.AppointmentDate.ToString("MMM")</div>
+                    <div class="d">@request.AppointmentDate.Day</div>
+                </div>
+                <div class="body">
+                    <h4>@request.DocumentSummary</h4>
+                    <p>
+                        @request.SlotLabel · @request.ReferenceCode
+                        @if (request.TotalFee > 0)
+                        {
+                            <text> · ₱@request.TotalFee.ToString("N2")</text>
+                        }
+                    </p>
+                </div>
+                <partial name="_StatusPill" model="request.Status" />
+            </a>
+        }
+    </div>
+}

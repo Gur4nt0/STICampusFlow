@@ -1,0 +1,219 @@
+@model RegistrarDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var maxDoc = Model.TopDocuments.Count == 0 ? 1 : Model.TopDocuments.Max(d => d.Count);
+}
+
+<div class="greet">
+    <h1>Good day, @Model.Staff.FirstName.</h1>
+    <p>@DateTime.Today.ToString("dddd, MMMM d, yyyy") · @(Model.Staff.Role == UserRole.RegistrarHead ? "Registrar Head" : "Registrar Staff")</p>
+</div>
+
+<!-- ===== Priority banner ===== -->
+<div class="queue-banner">
+    <div class="qb-text">
+        @if (Model.PendingCount > 0)
+        {
+            <h3>@Model.PendingCount request@(Model.PendingCount == 1 ? "" : "s") waiting for review</h3>
+            <p>
+                The oldest has been waiting since
+                @(Model.OldestPending.FirstOrDefault()?.CreatedAt.ToString("MMMM d") ?? "—").
+                Approve or decline them so students know where they stand.
+            </p>
+        }
+        else
+        {
+            <h3>The queue is clear</h3>
+            <p>Every submitted request has been reviewed. Nice work.</p>
+        }
+    </div>
+    <div class="qb-cta">
+        <a class="btn btn-yellow" asp-action="Queue" asp-route-status="pending">Open the queue</a>
+    </div>
+</div>
+
+<!-- ===== Stats ===== -->
+<div class="stat-row stat-row-4">
+    <div class="stat-card"><div class="n">@Model.PendingCount</div><div class="l">Pending review</div></div>
+    <div class="stat-card"><div class="n">@Model.TodayCount</div><div class="l">Appointments today</div></div>
+    <div class="stat-card"><div class="n">@Model.ReadyCount</div><div class="l">Waiting at the counter</div></div>
+    <div class="stat-card"><div class="n">@Model.ReleasedThisWeek</div><div class="l">Released this week</div></div>
+</div>
+
+<div class="dash-grid">
+    <!-- ===== Today's manifest ===== -->
+    <section>
+        <div class="section-head">
+            <h2>Today's manifest</h2>
+            <a asp-action="Manifest">Full manifest</a>
+        </div>
+
+        @if (Model.TodayManifest.Count == 0)
+        {
+            <p class="empty-note">No appointments are scheduled for today.</p>
+        }
+        else
+        {
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Student</th>
+                        <th>Documents</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var request in Model.TodayManifest)
+                    {
+                        <tr>
+                            <td class="nowrap"><b>@DateTime.Today.Add(request.SlotStart).ToString("h:mm tt")</b></td>
+                            <td>
+                                <div class="cell-strong">@request.Student.FullName</div>
+                                <div class="cell-sub">@request.Student.LoginId</div>
+                            </td>
+                            <td>
+                                <div class="cell-strong">@request.DocumentSummary</div>
+                                <div class="cell-sub">@request.ReferenceCode · @request.TotalCopies cop@(request.TotalCopies == 1 ? "y" : "ies")</div>
+                            </td>
+                            <td><partial name="_StatusPill" model="request.Status" /></td>
+                            <td class="nowrap"><a class="btn-link" asp-action="Details" asp-route-id="@request.Id">Open</a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <div class="section-head">
+            <h2>Longest waiting</h2>
+            <a asp-action="Queue" asp-route-status="pending" asp-route-sort="submitted">Review all</a>
+        </div>
+
+        @if (Model.OldestPending.Count == 0)
+        {
+            <p class="empty-note">Nothing is pending.</p>
+        }
+        else
+        {
+            <form method="post" asp-action="BulkApprove" id="bulkForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                        <tr>
+                            <th class="check-col"><input type="checkbox" id="checkAll" aria-label="Select all" /></th>
+                            <th>Student</th>
+                            <th>Documents</th>
+                            <th>Appointment</th>
+                            <th>Waiting</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var request in Model.OldestPending)
+                        {
+                            var waited = (DateTime.Now - request.CreatedAt).TotalDays;
+                            <tr>
+                                <td class="check-col"><input type="checkbox" name="ids" value="@request.Id" class="row-check" aria-label="Select @request.ReferenceCode" /></td>
+                                <td>
+                                    <div class="cell-strong">@request.Student.FullName</div>
+                                    <div class="cell-sub">@request.Student.LoginId</div>
+                                </td>
+                                <td>
+                                    <div class="cell-strong">@request.DocumentSummary</div>
+                                    <div class="cell-sub">@request.ReferenceCode</div>
+                                </td>
+                                <td class="nowrap">
+                                    <div class="cell-strong">@request.AppointmentDate.ToString("MMM d")</div>
+                                    <div class="cell-sub">@DateTime.Today.Add(request.SlotStart).ToString("h:mm tt")</div>
+                                </td>
+                                <td class="nowrap">
+                                    <span class="@(waited > 3 ? "wait-badge wait-late" : "wait-badge")">
+                                        @(waited < 1 ? "today" : $"{(int)waited}d")
+                                    </span>
+                                </td>
+                                <td class="nowrap"><a class="btn-link" asp-action="Details" asp-route-id="@request.Id">Open</a></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <button type="submit" class="btn btn-teal bulk-btn" id="bulkBtn" disabled>Approve selected</button>
+            </form>
+        }
+    </section>
+
+    <!-- ===== Side column ===== -->
+    <aside>
+        <div class="panel">
+            <h3>Today's load</h3>
+            <p class="panel-sub">How full each window is right now.</p>
+            <ul class="load-list">
+                @foreach (var slot in Model.TodaySlots)
+                {
+                    var pct = slot.Capacity == 0 ? 0 : (int)Math.Round(slot.Booked * 100.0 / slot.Capacity);
+                    <li>
+                        <span class="load-label">@slot.Label</span>
+                        <span class="load-bar"><i style="width:@Math.Min(100, pct)%" class="@(pct >= 100 ? "is-full" : pct >= 80 ? "is-high" : "")"></i></span>
+                        <span class="load-value">@slot.Booked/@slot.Capacity</span>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div class="panel">
+            <h3>Most requested</h3>
+            <p class="panel-sub">Across all live requests.</p>
+            @if (Model.TopDocuments.Count == 0)
+            {
+                <p class="empty-note">No live requests.</p>
+            }
+            else
+            {
+                <ul class="load-list">
+                    @foreach (var doc in Model.TopDocuments)
+                    {
+                        <li title="@doc.Name">
+                            <span class="load-label">@doc.Code</span>
+                            <span class="load-bar"><i style="width:@((int)Math.Round(doc.Count * 100.0 / maxDoc))%"></i></span>
+                            <span class="load-value">@doc.Count</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="panel">
+            <h3>Fees this month</h3>
+            <div class="big-figure">₱@Model.FeesCollectedThisMonth.ToString("N2")</div>
+            <p class="panel-sub">From documents already released.</p>
+        </div>
+
+        <div class="panel">
+            <h3>Recent activity</h3>
+            <ul class="timeline timeline-compact">
+                @foreach (var entry in Model.RecentActivity)
+                {
+                    <li>
+                        <span class="timeline-dot"></span>
+                        <div>
+                            <b>@entry.DocumentRequest.ReferenceCode → @entry.ToStatus.ToDisplayName()</b>
+                            <p>@entry.DocumentRequest.Student.FullName</p>
+                            <em>
+                                @entry.ChangedAt.ToString("MMM d, h:mm tt")
+                                @if (entry.ChangedBy is not null)
+                                {
+                                    <text> · @entry.ChangedBy.FirstName</text>
+                                }
+                            </em>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </aside>
+</div>

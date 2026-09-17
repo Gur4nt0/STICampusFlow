@@ -1,0 +1,80 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "_AuthLayout";
+}
+
+<div class="login-card">
+    <div class="kicker">STI CampusFlow</div>
+    <h2>Sign in</h2>
+    <p class="sub">Use your 11-digit student number, or your staff ID if you work at the registrar.</p>
+
+    <div class="role-tabs" role="tablist">
+        <button type="button" class="role-tab @(Model.StaffMode ? "" : "active")" data-role-tab="student" role="tab">Student</button>
+        <button type="button" class="role-tab @(Model.StaffMode ? "active" : "")" data-role-tab="staff" role="tab">Registrar staff</button>
+    </div>
+
+    <form method="post" asp-action="Login">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="ReturnUrl" />
+        <input type="hidden" asp-for="StaffMode" id="staffModeField" />
+
+        <div asp-validation-summary="ModelOnly" class="form-errors"></div>
+
+        <div class="id-field">
+            <label asp-for="LoginId" id="loginIdLabel">Student number</label>
+            <input asp-for="LoginId" id="loginIdInput" autocomplete="username" required
+                   inputmode="numeric" placeholder="02000123456" autofocus />
+            <span asp-validation-for="LoginId" class="field-error"></span>
+        </div>
+
+        <div class="id-field">
+            <label asp-for="Password">Password</label>
+            <input asp-for="Password" type="password" autocomplete="current-password" placeholder="••••••••" required minlength="4" />
+            <span asp-validation-for="Password" class="field-error"></span>
+        </div>
+
+        <label class="check-row">
+            <input asp-for="RememberMe" type="checkbox" />
+            <span>Keep me signed in on this device</span>
+        </label>
+
+        <button type="submit" class="btn btn-teal btn-block" id="btnLogin">Sign in</button>
+    </form>
+
+    <div class="divider-row"><span class="line"></span><span>new student?</span><span class="line"></span></div>
+
+    <a class="btn btn-office btn-block" asp-action="Register">Create a student account</a>
+
+    <div class="login-foot">
+        Demo accounts for the defence:<br />
+        <b>02000123456</b> / Student@@123 &nbsp;·&nbsp; <b>REG-001</b> / Registrar@@123
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Switching the tab only changes the label and the hint — the server decides
+    // which portal you land on based on the account's role.
+    (function () {
+        var tabs = document.querySelectorAll('[data-role-tab]');
+        var label = document.getElementById('loginIdLabel');
+        var input = document.getElementById('loginIdInput');
+        var field = document.getElementById('staffModeField');
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                tabs.forEach(function (t) { t.classList.remove('active'); });
+                tab.classList.add('active');
+
+                var staff = tab.dataset.roleTab === 'staff';
+                label.textContent = staff ? 'Staff ID' : 'Student number';
+                input.placeholder = staff ? 'REG-001' : '02000123456';
+                input.setAttribute('inputmode', staff ? 'text' : 'numeric');
+                field.value = staff ? 'true' : 'false';
+                input.focus();
+            });
+        });
+    })();
+</script>
+}

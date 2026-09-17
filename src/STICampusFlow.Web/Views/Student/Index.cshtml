@@ -1,0 +1,124 @@
+@model StudentDashboardViewModel
+@{
+    ViewData["Title"] = "Home";
+    var hour = DateTime.Now.Hour;
+    var greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+}
+
+<div class="greet">
+    <h1>@greeting, @Model.Student.FirstName.</h1>
+    <p>@Model.Student.Program · @Model.Student.Section · Student no. @Model.Student.LoginId</p>
+</div>
+
+@if (Model.TodayClosureReason is not null)
+{
+    <div class="cashier-note" style="margin-top:18px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>The registrar is closed today — @Model.TodayClosureReason. You can still book a slot for another day.</div>
+    </div>
+}
+
+<!-- ===== Next appointment / call to action ===== -->
+<div class="queue-banner">
+    <div class="qb-text">
+        @if (Model.NextAppointment is not null)
+        {
+            var next = Model.NextAppointment;
+            <h3>@(next.AppointmentDate == DateTime.Today ? "Your appointment is today" : "Your next appointment")</h3>
+            <p>
+                <b>@next.DocumentSummary</b> — @next.AppointmentDate.ToString("dddd, MMMM d") at @next.SlotLabel.
+                Reference <b>@next.ReferenceCode</b>. Status: @next.Status.ToDisplayName().
+            </p>
+        }
+        else
+        {
+            <h3>Nothing booked yet</h3>
+            <p>
+                Pick the documents you need, choose a slot between 8:00 AM and 5:00 PM on a weekday,
+                and bring your student ID on the day. Most bookings take under three minutes.
+            </p>
+        }
+    </div>
+    <div class="qb-cta">
+        @if (Model.NextAppointment is not null)
+        {
+            <a class="btn btn-yellow" asp-action="Details" asp-route-id="@Model.NextAppointment.Id">View details</a>
+        }
+        else
+        {
+            <a class="btn btn-yellow" asp-action="New">Request a document</a>
+        }
+    </div>
+</div>
+
+<!-- ===== Stats ===== -->
+<div class="stat-row">
+    <div class="stat-card">
+        <div class="n">@Model.OpenCount</div>
+        <div class="l">Active request@(Model.OpenCount == 1 ? "" : "s")</div>
+    </div>
+    <div class="stat-card">
+        <div class="n">@Model.ReadyCount</div>
+        <div class="l">Ready for pickup</div>
+    </div>
+    <div class="stat-card">
+        <div class="n">@Model.CompletedCount</div>
+        <div class="l">Released to date</div>
+    </div>
+</div>
+
+<!-- ===== Recent requests ===== -->
+<div class="section-head">
+    <h2>Recent requests</h2>
+    <a asp-action="Requests">See all</a>
+</div>
+
+@if (Model.RecentRequests.Count == 0)
+{
+    <div class="empty-state">
+        <p class="empty-note">You have not requested anything yet.</p>
+        <a class="btn btn-teal" asp-action="New">Make your first request</a>
+    </div>
+}
+else
+{
+    <div class="appt-list">
+        @foreach (var request in Model.RecentRequests)
+        {
+            <a class="appt-mini" asp-action="Details" asp-route-id="@request.Id">
+                <div class="date-chip">
+                    <div class="mo">@request.AppointmentDate.ToString("MMM")</div>
+                    <div class="d">@request.AppointmentDate.Day</div>
+                </div>
+                <div class="body">
+                    <h4>@request.DocumentSummary</h4>
+                    <p>@request.SlotLabel · @request.ReferenceCode · @request.TotalCopies cop@(request.TotalCopies == 1 ? "y" : "ies")</p>
+                </div>
+                <partial name="_StatusPill" model="request.Status" />
+            </a>
+        }
+    </div>
+}
+
+<!-- ===== Quick help ===== -->
+<div class="section-head">
+    <h2>Before you go to the office</h2>
+</div>
+<div class="req-grid">
+    <div class="info-card">
+        <h4>Bring your student ID</h4>
+        <p>The counter will not release a document without a valid ID or, if you are claiming for someone else, an authorisation letter and a copy of their ID.</p>
+    </div>
+    <div class="info-card">
+        <h4>Settle fees at the Cashier first</h4>
+        <p>Paid documents are only prepared once the Cashier has recorded your payment. Bring the receipt with your claim slip.</p>
+    </div>
+    <div class="info-card">
+        <h4>Arrive within your slot</h4>
+        <p>Slots run for one hour. If you miss your appointment, it is voided at the end of the day and you will need to book again.</p>
+    </div>
+    <div class="info-card">
+        <h4>Watch your status</h4>
+        <p>You will get a notification here the moment the registrar approves your request or marks the document ready for pickup.</p>
+    </div>
+</div>

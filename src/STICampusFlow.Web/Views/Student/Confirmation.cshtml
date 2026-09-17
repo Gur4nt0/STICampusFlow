@@ -1,0 +1,66 @@
+@model DocumentRequest
+@{
+    ViewData["Title"] = "Booking confirmed";
+}
+
+<div class="confirm-wrap">
+    <div class="confirm-check">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+
+    <h2>You're booked.</h2>
+    <p>
+        Save your reference code. The registrar will review your request and you will be
+        notified here the moment it is approved.
+    </p>
+
+    <div class="ticket">
+        <div class="ticket-row">
+            <span class="l">Reference code</span>
+            <span class="r"><span class="ref-code">@Model.ReferenceCode</span></span>
+        </div>
+        <div class="ticket-row">
+            <span class="l">Student</span>
+            <span class="r">@Model.Student.FullName<br /><small>@Model.Student.LoginId</small></span>
+        </div>
+        <div class="ticket-row">
+            <span class="l">Documents</span>
+            <span class="r">
+                @foreach (var item in Model.Items)
+                {
+                    <div>@item.DocumentType.Name × @item.Copies</div>
+                }
+            </span>
+        </div>
+        <div class="ticket-row">
+            <span class="l">Appointment</span>
+            <span class="r">@Model.AppointmentDate.ToString("dddd, MMMM d, yyyy")<br /><small>@Model.SlotLabel</small></span>
+        </div>
+        <div class="ticket-row">
+            <span class="l">Purpose</span>
+            <span class="r">@(Model.Purpose ?? "—")</span>
+        </div>
+        <div class="ticket-row">
+            <span class="l">Total fee</span>
+            <span class="r">@(Model.TotalFee > 0 ? $"₱{Model.TotalFee:N2}" : "Free of charge")</span>
+        </div>
+        <div class="ticket-row">
+            <span class="l">Status</span>
+            <span class="r"><partial name="_StatusPill" model="Model.Status" /></span>
+        </div>
+    </div>
+
+    @if (Model.TotalFee > 0)
+    {
+        <div class="cashier-note" style="margin:20px auto 0;text-align:left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div>Settle ₱@Model.TotalFee.ToString("N2") at the Cashier's Office before your appointment, and bring the receipt.</div>
+        </div>
+    }
+
+    <div class="confirm-actions">
+        <a class="btn btn-teal" asp-action="Slip" asp-route-id="@Model.Id" target="_blank" rel="noopener">Print claim slip</a>
+        <a class="btn btn-office" asp-action="Details" asp-route-id="@Model.Id">Track this request</a>
+        <a class="btn btn-ghost" asp-action="Index">Back to home</a>
+    </div>
+</div>

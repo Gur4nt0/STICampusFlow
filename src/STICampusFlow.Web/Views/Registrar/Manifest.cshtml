@@ -1,0 +1,106 @@
+@model ManifestViewModel
+@{
+    ViewData["Title"] = "Daily manifest";
+    var prev = Model.Date.AddDays(-1);
+    var next = Model.Date.AddDays(1);
+}
+
+<div class="page-head no-print">
+    <div>
+        <h1>@Model.Date.ToString("dddd, MMMM d, yyyy")</h1>
+        <p>
+            @Model.Total appointment@(Model.Total == 1 ? "" : "s")
+            @if (Model.ExpectedFees > 0)
+            {
+                <text>· ₱@Model.ExpectedFees.ToString("N2") expected in fees</text>
+            }
+        </p>
+    </div>
+    <div class="head-actions">
+        <a class="btn btn-office" asp-action="Manifest" asp-route-date="@prev.ToString("yyyy-MM-dd")">←</a>
+        <form method="get" asp-action="Manifest" class="inline-date">
+            <input type="date" name="date" value="@Model.Date.ToString("yyyy-MM-dd")" onchange="this.form.submit()" />
+        </form>
+        <a class="btn btn-office" asp-action="Manifest" asp-route-date="@next.ToString("yyyy-MM-dd")">→</a>
+        <a class="btn btn-office" asp-action="ManifestCsv" asp-route-date="@Model.Date.ToString("yyyy-MM-dd")">Export CSV</a>
+        <button type="button" class="btn btn-teal" onclick="window.print()">Print</button>
+    </div>
+</div>
+
+<div class="print-head only-print">
+    <b>@Model.CampusName · @Model.OfficeName</b>
+    <span>Daily appointment manifest — @Model.Date.ToString("dddd, MMMM d, yyyy")</span>
+</div>
+
+@if (Model.ClosureReason is not null)
+{
+    <div class="inline-alert inline-alert-warn">
+        <b>The office is closed on this date</b>
+        <p>@Model.ClosureReason</p>
+    </div>
+}
+
+@if (Model.Total == 0)
+{
+    <div class="empty-state">
+        <p class="empty-note">No appointments are booked for this date.</p>
+    </div>
+}
+else
+{
+    @foreach (var group in Model.BySlot)
+    {
+        var slotInfo = Model.Slots.FirstOrDefault(s => s.Start == group.Key);
+        <div class="manifest-block">
+            <div class="manifest-slot">
+                <b>@DateTime.Today.Add(group.Key).ToString("h:mm tt")</b>
+                <span>
+                    @group.Count() booked@(slotInfo is not null ? $" of {slotInfo.Capacity}" : "")
+                </span>
+            </div>
+
+            <div class="table-wrap">
+                <table class="data-table compact">
+                    <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Student</th>
+                        <th>Program</th>
+                        <th>Documents</th>
+                        <th class="num">Fee</th>
+                        <th>Status</th>
+                        <th class="no-print"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var request in group)
+                    {
+                        <tr>
+                            <td class="nowrap"><code class="ref-chip">@request.ReferenceCode</code></td>
+                            <td>
+                                <div class="cell-strong">@request.Student.FullName</div>
+                                <div class="cell-sub">@request.Student.LoginId</div>
+                            </td>
+                            <td class="cell-sub">@request.Student.Program</td>
+                            <td>
+                                @foreach (var item in request.Items)
+                                {
+                                    <div class="cell-sub">@item.DocumentType.Code × @item.Copies</div>
+                                }
+                            </td>
+                            <td class="num nowrap">@(request.TotalFee > 0 ? request.TotalFee.ToString("N2") : "—")</td>
+                            <td><partial name="_StatusPill" model="request.Status" /></td>
+                            <td class="nowrap no-print"><a class="btn-link" asp-action="Details" asp-route-id="@request.Id">Open</a></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    <div class="manifest-total">
+        <span>Total for the day</span>
+        <b>@Model.Total appointment@(Model.Total == 1 ? "" : "s") · ₱@Model.ExpectedFees.ToString("N2")</b>
+    </div>
+}
