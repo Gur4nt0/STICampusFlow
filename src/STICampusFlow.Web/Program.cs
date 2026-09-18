@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using STICampusFlow.Web.Data;
 using STICampusFlow.Web.Services;
@@ -87,6 +88,17 @@ using (var scope = app.Services.CreateScope())
 // ---------------------------------------------------------------------------
 // Pipeline
 // ---------------------------------------------------------------------------
+// Render (and most PaaS hosts) terminate HTTPS at their edge proxy and forward
+// requests to the container over plain HTTP — without this, UseHttpsRedirection
+// below can't tell the original request was already HTTPS and redirect-loops.
+var forwardedHeadersOptions = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwardedHeadersOptions.KnownNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedHeadersOptions);
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

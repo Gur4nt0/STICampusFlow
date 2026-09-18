@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: sticampusflow
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+    healthCheckPath: /
