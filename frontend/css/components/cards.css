@@ -1,0 +1,12 @@
+/* components/cards.css — Cards and grid helpers */
+/* ---------- cards: bordered + shadowed so they never blend into the page */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-card); padding: 1.25rem; }
+.card.flat { box-shadow: none; }
+.card.tight { padding: 1rem; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .9rem; flex-wrap: wrap; }
+.section-title { font: 650 1rem var(--font-head); margin: 1.75rem 0 .75rem; display: flex; align-items: center; gap: .6rem; }
+.section-title .swatch { width: 10px; height: 10px; border-radius: 3px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+.split { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }

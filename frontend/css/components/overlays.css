@@ -1,0 +1,19 @@
+/* components/overlays.css — Toasts and modal dialogs */
+/* ---------- toasts + modal */
+.toasts { position: fixed; z-index: 100; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); display: grid; gap: .5rem; max-width: min(420px, calc(100vw - 2rem)); }
+.toast { padding: .8rem 1rem; border-radius: 12px; background: var(--rail); color: #fff; box-shadow: var(--shadow-pop); display: flex; gap: .6rem; align-items: flex-start; animation: rise .25s ease-out; font-size: .93rem; }
+.toast svg { width: 20px; height: 20px; flex: none; margin-top: 1px; }
+.toast.error { background: #8E1F1F; }
+.toast.success { background: #145C3C; }
+@keyframes rise { from { transform: translateY(10px); opacity: 0; } }
+.modal-back { position: fixed; inset: 0; z-index: 90; background: rgba(8, 14, 28, .55); display: grid; place-items: center; padding: 1rem; }
+.modal { width: 100%; max-width: 560px; max-height: calc(100vh - 2rem); overflow-y: auto; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-pop); padding: 1.4rem; animation: rise .2s ease-out; }
+.modal.wide { max-width: 860px; }
+.modal-foot { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1.25rem; flex-wrap: wrap; }
+
+/* "Are you sure?" dialogs (sign out, cancel, remove…) */
+.modal.small-modal { max-width: 430px; }
+.confirm { text-align: left; }
+.confirm-ic { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); margin-bottom: .9rem; }
+.confirm.danger .confirm-ic { background: var(--danger-soft); color: var(--danger); }
+.confirm-ic svg { width: 22px; height: 22px; }

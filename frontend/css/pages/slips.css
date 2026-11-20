@@ -1,0 +1,37 @@
+/* pages/slips.css — Printable payment & claim slips */
+/* ---------- printable slips */
+.print-page { max-width: 780px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.print-actions { display: flex; gap: .6rem; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; }
+.slip { max-width: 100%; background: #fff; color: #111; border-radius: 16px; border: 1px solid #cfd6e2; box-shadow: var(--shadow-card); overflow: hidden; font-family: var(--font-body); }
+.slip-head { display: flex; align-items: center; gap: .9rem; padding: 1.1rem 1.4rem; background: #0E2A55; color: #fff; }
+.slip-head .brand-mark { width: 44px; height: 44px; color: #0E2A55; }
+.slip-head b { font: 700 1.1rem var(--font-head); display: block; }
+.slip-head span { font-size: .82rem; color: #C4D2EA; }
+.slip-kind { margin-left: auto; text-align: right; font: 700 1rem var(--font-head); color: #FFD21F; }
+.slip-body { padding: 1.3rem 1.4rem; display: grid; gap: 1.1rem; }
+.slip-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem 1.25rem; font-size: .92rem; }
+.slip-grid dt { font-size: .76rem; color: #5b6477; font-weight: 700; }
+.slip-grid dd { margin: 0; font-weight: 700; }
+.slip table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.slip th, .slip td { padding: .5rem .4rem; border-bottom: 1px solid #e0e5ee; text-align: left; }
+.slip th { font-size: .76rem; color: #5b6477; }
+.slip td.r, .slip th.r { text-align: right; }
+.slip tfoot td { font-weight: 800; border-bottom: 0; font-size: 1rem; }
+.slip-when { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center; padding: 1rem; border-radius: 12px; background: #FFF6CC; border: 1px dashed #C9A400; }
+.slip-when .big { font: 800 1.5rem/1.1 var(--font-head); }
+.perf { border: 0; border-top: 2px dashed #b8c1d1; margin: 0; }
+.sign { display: flex; justify-content: space-between; align-items: flex-end; gap: 1.5rem; flex-wrap: wrap; }
+.sign-box { min-width: 240px; text-align: center; }
+.sign-img { height: 64px; display: flex; align-items: flex-end; justify-content: center; }
+.sign-img img { max-height: 64px; }
+.sign-script { font-family: "Caveat", "Segoe Script", cursive; font-size: 2rem; color: #1a3a8a; line-height: 1; }
+.sign-line { border-top: 1.5px solid #111; margin-top: 2px; padding-top: .3rem; font-weight: 800; font-size: .92rem; }
+.sign-title { font-size: .8rem; color: #5b6477; }
+.barcode svg { height: 56px; width: 100%; max-width: 280px; display: block; }
+.barcode div { font: 700 .8rem ui-monospace, Menlo, Consolas, monospace; letter-spacing: .25em; text-align: center; max-width: 280px; }
+.qr-box { display: flex; gap: 1rem; align-items: center; max-width: 380px; }
+.qr-box svg { flex: none; border: 1px solid #d5dbe6; border-radius: 8px; }
+.qr-box b { display: block; font-size: .92rem; }
+.qr-box span { display: block; font-size: .8rem; color: #5b6477; margin-top: .2rem; }
+.qr-box .ref { font: 700 .82rem ui-monospace, Menlo, Consolas, monospace; letter-spacing: .12em; color: #111; margin-top: .4rem; }
+.slip-rules { font-size: .82rem; color: #3b4456; padding-left: 1.1rem; margin: 0; }

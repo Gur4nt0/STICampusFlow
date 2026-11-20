@@ -1,0 +1,28 @@
+/* pages/registrar.css — Registrar: stats, bar charts, table, filters, key-value list, signature pad */
+/* ---------- stats (registrar) */
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: .8rem; }
+.stat { padding: 1rem; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-card); text-decoration: none; color: inherit; display: grid; gap: .15rem; }
+.stat b { font: 800 1.8rem/1.1 var(--font-head); font-variant-numeric: tabular-nums; }
+.stat span { font-size: .85rem; color: var(--muted); font-weight: 700; }
+.stat.alert { border-color: color-mix(in srgb, var(--warn) 55%, var(--border)); background: color-mix(in srgb, var(--warn-soft) 60%, var(--surface)); }
+.bars { display: grid; gap: .45rem; }
+.bar-row { display: grid; grid-template-columns: 70px minmax(0,1fr) 44px; gap: .6rem; align-items: center; font-size: .82rem; }
+.bar { height: 12px; border-radius: 6px; background: var(--surface-3); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--primary); border-radius: 6px; }
+.bar i.hot { background: var(--danger); }
+
+/* ---------- table (registrar queue) */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-card); }
+table.data { width: 100%; border-collapse: collapse; font-size: .9rem; }
+table.data th { text-align: left; font-size: .8rem; color: var(--muted); font-weight: 700; padding: .7rem .8rem; border-bottom: 1px solid var(--border); background: var(--surface-2); white-space: nowrap; }
+table.data td { padding: .7rem .8rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.data tr:last-child td { border-bottom: 0; }
+table.data tbody tr:hover { background: var(--surface-2); cursor: pointer; }
+table.data input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--primary); }
+.filters { display: grid; grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); gap: .6rem; margin-bottom: 1rem; }
+.pager { display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; gap: .5rem; flex-wrap: wrap; }
+.kv { display: grid; grid-template-columns: 140px minmax(0,1fr); gap: .45rem .8rem; font-size: .92rem; }
+.kv dt { color: var(--muted); font-weight: 700; }
+.kv dd { margin: 0; overflow-wrap: anywhere; }
+.receipt-thumb { max-height: 260px; border-radius: 10px; border: 1px solid var(--border); cursor: zoom-in; }
+.sigpad { width: 100%; height: 170px; border: 2px dashed var(--border-strong); border-radius: 12px; background: #fff; touch-action: none; cursor: crosshair; }

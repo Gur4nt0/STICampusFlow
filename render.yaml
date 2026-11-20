@@ -1,10 +1,36 @@
+# Render Blueprint — Dashboard → New → Blueprint → pick this repository.
+# The persistent disk keeps the SQLite database safe across restarts and redeploys.
+# (Render only offers disks on paid instance types; see DEPLOY.md for the free test option.)
 services:
   - type: web
-    name: sticampusflow
-    runtime: docker
-    dockerfilePath: ./Dockerfile
-    plan: free
+    name: sti-campusflow
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: echo "No build step needed"
+    startCommand: node --disable-warning=ExperimentalWarning backend/server.js
+    healthCheckPath: /health
     envVars:
-      - key: ASPNETCORE_ENVIRONMENT
-        value: Production
-    healthCheckPath: /
+      - key: NODE_VERSION
+        value: "22.14.0"
+      - key: TZ
+        value: Asia/Manila
+      - key: DATA_DIR
+        value: /var/data
+      - key: SEED_MODE
+        value: demo            # change to "minimal" for real use (no sample students)
+      - key: ADMIN_PASSWORD
+        sync: false            # Render asks you to type it during setup
+      # Student sign-in with Microsoft (school email). Leave blank to use the demo account picker.
+      - key: MS_CLIENT_ID
+        sync: false
+      - key: MS_CLIENT_SECRET
+        sync: false
+      - key: MS_TENANT_ID
+        sync: false
+      - key: ALLOWED_EMAIL_DOMAINS
+        value: sti.edu.ph
+    disk:
+      name: campusflow-data
+      mountPath: /var/data
+      sizeGB: 1

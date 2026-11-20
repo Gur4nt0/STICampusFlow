@@ -1,243 +1,205 @@
-# STI CampusFlow — Registrar Document Request & Appointment System
+# STI CampusFlow v2 — Registrar Document Request & Appointment System
 
-A working full-stack web application for STI College Global City: students request
-registrar documents and book an appointment slot, and registrar staff review, approve,
-process and release those requests from their own console.
+Rebuilt from the ASP.NET version into a plain **HTML + CSS + JavaScript** front end, a
+**Node.js** backend and a **SQLite** database — with every item from the team's feedback
+document (`minions_assemble.pdf`) built in.
 
-Built on the stack in the capstone gameplan — **C# / ASP.NET Core 8 MVC**, **Entity
-Framework Core**, **SQL Server** (with a SQLite fallback), and **vanilla JavaScript**
-on the front end.
-
----
-
-## 1. Running it
-
-### Fastest path (no database setup at all)
-
-1. Open `STICampusFlow.sln` in **Visual Studio 2022** (any edition, workload:
-   *ASP.NET and web development*).
-2. Press **F5**.
-
-That's it. The default configuration uses SQLite, so the app creates
-`campusflow.db` next to the executable on first run and fills it with demo data.
-Nothing needs to be installed, and it works with the campus Wi-Fi down.
-
-Visual Studio opens <https://localhost:7241> automatically (the profile lives in
-`Properties/launchSettings.json`). If a console window appears without a browser, look for
-the line `Now listening on: …` and open that address yourself.
-
-The first HTTPS run may warn about the certificate. Fix it once, from a terminal:
-
-```bash
-dotnet dev-certs https --trust
-```
-
-Or pick the **CampusFlow (http only)** profile from the green run button's dropdown and use
-<http://localhost:5241> instead — handy on lab machines where you cannot trust certificates.
-
-### Command line
-
-```bash
-cd src/STICampusFlow.Web
-dotnet restore
-dotnet run
-```
-
-Then open the URL printed in the console (usually `https://localhost:7xxx`).
-
-### Switching to SQL Server
-
-Edit `src/STICampusFlow.Web/appsettings.json`:
-
-```jsonc
-"Database": {
-  "Provider": "SqlServer"     // was "Sqlite"
-},
-"ConnectionStrings": {
-  "SqlServer": "Server=(localdb)\\MSSQLLocalDB;Database=STICampusFlow;Trusted_Connection=True;TrustServerCertificate=True"
-}
-```
-
-Run the app again — EF Core creates the schema and seeds it. If you would rather
-build the database by hand (useful for the DBA role and the ERD chapter), run
-`database/schema-sqlserver.sql` in SQL Server Management Studio first and set
-`"SeedDemoData": false`.
-
-### Resetting the demo data
-
-The SQLite file is created once and then left alone. After any change to the entities or
-the seeder, delete it and run again to get a fresh, reseeded database:
-
-```
-src\STICampusFlow.Web\bin\Debug\net8.0\campusflow.db
-```
-
-(Three files may be there — `campusflow.db`, `-shm`, `-wal`. Delete all three.)
-
-### If it builds but won't start
-
-> `You must install or update .NET to run this application.`
-> `Framework: 'Microsoft.AspNetCore.App', version '8.0.0' — the following frameworks were found: 10.0.x`
-
-That machine has a newer .NET than the one the project targets. The `.csproj` already
-carries `<RollForward>LatestMajor</RollForward>`, which lets the .NET 8 build run on .NET 9,
-10 or later — so if you hit this, the fix is simply to **rebuild** (Build → Rebuild
-Solution) so the new setting is written into `STICampusFlow.Web.runtimeconfig.json`.
-
-If you would rather match the runtime exactly, either install the
-**ASP.NET Core Runtime 8.0** from <https://dotnet.microsoft.com/download/dotnet/8.0>, or
-retarget the project by changing `<TargetFramework>net8.0</TargetFramework>` to your
-installed version and bumping the three `Microsoft.EntityFrameworkCore.*` package versions
-to the matching major (e.g. `10.0.0`).
-
-Targeting .NET 8 is deliberate: it is the long-term-support release, so every member of
-the team can build the project whether they have .NET 8, 9 or 10 installed.
+**Nothing to install except Node.js.** No `npm install`, no XAMPP, no SQL Server. Node 22
+has SQLite built in, so the whole backend runs from the standard library.
 
 ---
 
-## 2. Demo accounts
+## 1. Run it
 
-| Role | ID | Password |
-| --- | --- | --- |
-| Student | `02000123456` | `Student@123` |
-| Registrar head | `REG-001` | `Registrar@123` |
-| Registrar staff | `REG-002` | `Registrar@123` |
-| Registrar staff | `REG-003` | `Registrar@123` |
+1. Install **Node.js 22.13 or newer** (the LTS from <https://nodejs.org> is fine — v24 works too).
+2. Open this folder and double-click **`start.bat`** (Windows), or run:
+   ```bash
+   node backend/server.js
+   ```
+3. Open **<http://localhost:3000>**.
 
-The seeder also creates 63 more students (all with `Student@123`), 10 document
-types, holiday closures, capacity overrides and roughly 120 requests spread across
-past, present and future dates — so every screen has realistic data during the defence.
+The first start creates `data/campusflow.db` and fills it with demo data.
 
----
+**Open it on your phone:** the console also prints a link like `http://192.168.1.5:3000`.
+Open that on a phone connected to the same Wi-Fi. (Allow Node through the Windows firewall
+if Windows asks.)
 
-## 3. What the system does
+**Fresh demo data:** stop the server, delete the `data` folder, start again (or `npm run reset`).
 
-### Student side
+**Live preview (no server):** `node backend/tools/build-preview.js` builds
+`dist/campusflow-preview.html` — the whole app in one file, running the same rules in the
+browser with data saved in localStorage. Good for showing the design to the adviser.
 
-- **Register / sign in** with an 11-digit student number (PBKDF2-SHA256 hashed passwords).
-- **Pick documents** from the catalogue, with a per-document copy stepper and live fee total.
-- **Book a slot** on an interactive calendar that greys out weekends, holidays, past dates
-  and full days, then shows the remaining capacity of each one-hour window.
-- **Confirmation ticket** with a reference code, plus a **printable claim slip** carrying a
-  scannable Code 39 barcode.
-- **Track the request** through Submitted → Approved → Ready for pickup → Released,
-  with a full activity log.
-- **Cancel** an appointment while it is still pending or approved.
-- **Notifications** whenever the registrar acts on a request.
+### Settings file (`.env`) — connecting the front end and back end
+All server settings live in **`.env`**. Add or change values there as needed;
+`backend/server.js` reads it on start using Node's built-in loader, so there is still nothing to install.
+Values set by a host (Render, Railway, Docker) override the file. `.env` is in `.gitignore`, so passwords never reach GitHub.
 
-### Registrar side
+**Mode 1 — one server (default).** `node backend/server.js`, open <http://localhost:3000>. The server gives
+out the front end *and* the API on the same address. Nothing to configure.
 
-- **Dashboard** — pending count, today's appointment total, documents waiting at the
-  counter, releases this week, fees collected this month, per-window load bars, the most
-  requested documents, and a live activity feed.
-- **Queue** — search by name, student number or reference code; filter by status, document
-  type and date range; sort; paginate; **bulk-approve** selected pending requests.
-- **Request detail** — everything about the request and the student, their other requests,
-  and only the status transitions that are legal from the current state.
-- **Approve / decline / start processing / mark ready / release / mark no-show**, with
-  canned decline reasons and a required explanation that the student sees.
-- **Daily manifest** grouped by time window, printable, and exportable as CSV.
-- **Capacity & closures** — close a date (students booked on it are notified automatically)
-  and override the capacity of a whole day or a single window.
+**Mode 2 — front end opened separately** (e.g. VS Code **Live Server** on port 5500):
+1. Start the back end: `node backend/server.js` (keep it running).
+2. In `.env`, check `API_URL` (where the back end runs, default `http://localhost:3000`) and
+   `FRONTEND_URL` / `CORS_ORIGINS` (where the front end is opened, default port 5500).
+3. Restart the server. It writes `frontend/env.js`, which tells the front end where the API is.
+4. Open `frontend/index.html` with Live Server. Sign-in, requests and notifications go to the back end.
 
----
+Only the addresses in `FRONTEND_URL` / `CORS_ORIGINS` may call the API; any other site is refused.
 
-## 4. Business rules enforced
-
-Every rule below lives in `Services/SchedulingService.cs` and is checked **on the server**
-when the form is posted, not only in the browser — so the calendar cannot be bypassed.
-
-1. Operating hours 8:00 AM – 5:00 PM, in one-hour windows.
-2. The 12:00–1:00 PM lunch break is not bookable.
-3. Weekends are closed.
-4. Holidays and campus closures come from the `BlockedDates` table.
-5. No bookings in the past; same-day bookings need at least 2 hours' lead time.
-6. Bookings open at most 45 days ahead.
-7. Each window holds 8 students by default, overridable per date or per window.
-8. One appointment per student per day — this is what blocks double-booking.
-9. A student may hold at most 3 open requests at once.
-10. Copies per document are capped by the document's own `MaxCopies`.
-11. Status transitions follow a fixed state machine; anything else is rejected.
-12. Appointments that pass without being released are auto-voided as no-shows on startup.
-
-All of these are configurable in `appsettings.json` under `"Registrar"` — the campus can
-change its hours or capacity without touching code.
-
----
-
-## 5. Looking at the design without installing anything
-
-`preview/index.html` opens in any browser and links to static copies of all eleven
-screens, built from the same `styles.css` + `app.css` the application uses. Nothing there
-is connected to the database — it exists so the team (and the UI designer) can review the
-design before the .NET SDK is installed. `preview/shots/` already holds desktop and mobile
-PNGs of every screen for the manuscript; regenerate them with `python preview/build.py`
-after a CSS change.
-
----
-
-## 6. Project structure
-
-```
-STICampusFlow.sln
-├── database/
-│   └── schema-sqlserver.sql          Hand-written DDL + reporting views (for the ERD chapter)
-├── docs/
-│   └── defense-notes.md              Panel Q&A, architecture summary, test cases
-└── src/STICampusFlow.Web/
-    ├── Program.cs                    Startup, DI, auth, provider switch
-    ├── appsettings.json              Office rules and connection strings
-    ├── Controllers/
-    │   ├── AccountController.cs      Login, registration, logout
-    │   ├── StudentController.cs      Dashboard, picker, booking, tracking, slip
-    │   ├── RegistrarController.cs    Queue, detail, transitions, manifest, capacity
-    │   └── ApiController.cs          JSON availability endpoints for the calendar
-    ├── Data/
-    │   ├── AppDbContext.cs           EF Core mappings, indexes, delete behaviours
-    │   └── DbSeeder.cs               Demo data generator (deterministic)
-    ├── Models/
-    │   ├── Entities/                 User, DocumentType, DocumentRequest, RequestItem,
-    │   │                             StatusHistory, BlockedDate, SlotCapacity, Notification
-    │   ├── Enums.cs                  Roles, statuses, the transition state machine
-    │   └── ViewModels/
-    ├── Services/
-    │   ├── SchedulingService.cs      The scheduling engine (availability + validation)
-    │   ├── RequestService.cs         Create, transition, cancel, audit, notify
-    │   ├── NotificationService.cs
-    │   └── PasswordHasher.cs         PBKDF2-SHA256, 100k iterations, per-user salt
-    ├── Views/                        Razor views, one folder per controller
-    └── wwwroot/
-        ├── css/styles.css            The design system (from the team's Figma work)
-        ├── css/app.css               Application styles built on those tokens
-        └── js/app.js
-```
-
----
-
-## 7. Security notes (for the manuscript)
-
-- Passwords are never stored in plain text. `PasswordHasher` derives a 256-bit key with
-  PBKDF2-SHA256 over 100,000 iterations and a 128-bit per-user salt, and verifies with a
-  fixed-time comparison. The iteration count is stored with the hash so it can be raised later.
-- Authentication uses an HttpOnly, SameSite=Lax cookie with a 4-hour sliding expiry.
-- Authorization is policy-based: `StudentOnly`, `RegistrarOnly`, `RegistrarHeadOnly`.
-- Every POST is CSRF-protected — `AutoValidateAntiforgeryToken` is registered globally.
-- All data access goes through EF Core with parameterised queries, so string
-  concatenation into SQL never happens (no SQL-injection surface).
-- Ownership is checked on every student action: a student can only open, print or cancel
-  their own requests.
-- The login form returns one generic error for both "unknown ID" and "wrong password",
-  so it cannot be used to enumerate valid student numbers.
-- Razor escapes all output by default, which covers stored XSS from note fields.
-
----
-
-## 8. Where each team member's work lives
-
-| Role | Files to own |
+| Variable | What it does |
 | --- | --- |
-| Backend lead | `Services/`, `Controllers/`, `Program.cs` |
-| Frontend lead | `Views/`, `wwwroot/css/app.css`, `wwwroot/js/app.js` |
-| DBA & QA | `Data/`, `database/schema-sqlserver.sql`, `docs/defense-notes.md` (test cases) |
-| Tech writer / UI | `wwwroot/css/styles.css`, `Views/Shared/Slip.cshtml`, screenshots |
-| Project manager | Branching, merges, `README.md`, the timeline |
+| `PORT` | Back-end port (3000) |
+| `API_URL` | Back-end address the front end calls (Mode 2) |
+| `FRONTEND_URL`, `CORS_ORIGINS` | Front-end addresses allowed to call the API (Mode 2) |
+| `COOKIE_SAMESITE` | `Lax` locally; `None` only for different domains over https |
+| `PUBLIC_URL` | Address printed in the slip QR codes |
+| `DATA_DIR`, `DB_FILE` | Where the SQLite database is kept |
+| `SEED_MODE`, `ADMIN_PASSWORD`, `DEMO_PASSWORD` | Demo data or real-use start |
+| `SLIP_SECRET` | Key that signs QR links (blank = random, saved in `data/`) |
+| `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `GMAIL_FROM_NAME`, `EMAIL_NOTIFICATIONS` | Email notices |
+| `ALLOWED_EMAIL_DOMAINS` | School email domains allowed to sign up |
+
+### Demo accounts
+
+| Role | How to sign in |
+| --- | --- |
+| Student | **Student** tab → `02000123456` / `Student@123` (or tap the demo button to fill it in) |
+| Registrar head | **Registrar staff** tab → `REG-001` / `Registrar@123` |
+| Registrar staff | `REG-002`, `REG-003` / `Registrar@123` |
+
+New students make their own account from **Create your account** on the sign-in page.
+Typing a new `@…sti.edu.ph` email in the picker creates a new student, so you can show the first-time setup.
+
+---
+
+## 2. What changed, item by item (from the feedback doc)
+
+### Features
+| Feedback | What we built |
+| --- | --- |
+| **1.** Paid docs (Good Moral, Form 137 & 138) need a payslip with the doc types, registrar's name and signature | Every request with a fee gets a printable **Payment slip** (order of payment) listing codes, copies, unit fees and total, with the **registrar's name, title and signature** and a **QR code**. Student pays at the Cashier, then **uploads the OR number + a photo of the receipt**. Registrar checks it (*Payment is correct* / *Not accepted* with a reason). Paid documents can't be marked ready until the payment is confirmed. **Form 138** was added to the catalogue. The head registrar draws the signature once under **Slip signature**; it prints on every payment slip and claim slip. |
+| **2.** Notify a day before, "make sure you come at the exact time" | Automatic reminders **24 hours before** and **2 hours before** each appointment (in the bell, as a toast, and as a **browser pop-up** if the student turns it on). |
+| **2.** Typhoon: students think the office is closed too | Registrar → **Closures & notices** → *Classes suspended, office open*. Every student booked that day is notified that the office **is open** and their appointment stays (they may also move it for free). The day shows a warning dot on the calendar and a notice on the claiming board. *Office closed* is also available for holidays — booked students are asked to pick a new time at no penalty. |
+| **3.** Side announcements with who's claiming, by student number | **Claiming board** on the right side of every page (its own tab on phones): *"02000•••456 — Good Moral Certificate — 2:30 PM"*, with the student's own row highlighted as **You**, crossed out once claimed, plus seats left per window and registrar announcements. Middle digits are hidden for privacy (set `maskStudentNumbers: false` in `backend/config.js` to show full numbers). |
+
+### Design
+| Feedback | What we built |
+| --- | --- |
+| **1.** Can't open on a phone | Fully responsive. Phones get a bottom tab bar, one-column layouts, bottom-sheet dialogs, big tap targets, and safe-area support for notched phones. Tested at 390 px and 1440 px wide. |
+| **2.** Cards too white, can't tell forms apart | Cards now have a visible border and shadow on a tinted page background, plus a **mild colour stripe on the left side** per category (records, certifications, clearances, enrollment). A selected document gets a coloured outline, tinted fill and check mark. |
+| **3.** Dark mode | Moon/sun button in the top bar; Light / Dark / Match my device under Account. Remembered per browser. |
+| **4.** Font style | Body: **Atkinson Hyperlegible Next** (made for easy reading). Headings: **Bricolage Grotesque**. Falls back to Segoe UI if offline. |
+| **5.** Centered when zoomed out | The whole app sits in a centered frame (max 1440 px), and page content is centered inside it. |
+
+### System
+| Feedback | What we built |
+| --- | --- |
+| **1.** Cancel right away or give extra time? | **Both, in steps.** A **30-minute grace period** after the window ends. If still not claimed, the request becomes **Missed — on hold** (not cancelled) and the student has **7 days** to pick a new time. Only after that is it closed as *Not claimed*. Students can move an appointment up to **2 times**. All numbers are in `backend/config.js`. |
+| **2.** Limit so students don't conflict | **One-hour windows (8 AM, 9 AM, 10 AM… 4 PM) with 8 seats each** (configurable, and adjustable per day by the registrar). Seats are checked **on the server inside a database transaction**, so two students can't grab the last seat at once. A student can only have **one appointment per day** and **3 open requests**; the calendar marks days they already booked. The calendar also blocks days before the documents can be ready (e.g. Transcript needs 5 working days). |
+
+---
+
+### v2.1 changes
+- **Hour-only time windows.** Students pick 8 AM, 9 AM, 10 AM… 4 PM (lunch 12–1 PM is closed). Times show without minutes ("2 PM to 3 PM"). Change `slotMinutes` / `defaultSlotCapacity` in `backend/config.js`.
+- **QR code instead of a barcode** on both the payment slip and the claim slip. Scanning it opens a live, signed copy of that slip **without signing in**, showing the current status, so the Registrar can scan it at the window to confirm it's genuine. The link carries an HMAC token (`data/.slip-secret`), so slip links can't be guessed or faked.
+- **Download as image.** Every slip has a *Download as image* button that saves a PNG (with the QR and signature) to the phone's Downloads/Photos, plus *Print or save as PDF*.
+- The QR points to this computer's Wi-Fi address so phones on the same network can open it. Once hosted online, set `publicUrl` in `backend/config.js` (or the `PUBLIC_URL` environment variable) to the real address.
+- **After updating from v2.0, delete the `data` folder once** so the demo data is recreated with hourly times.
+
+### v2.2 — ready for web hosting
+- **Hosting files:** `render.yaml` (Render), `Dockerfile` (Railway, Fly.io, any VPS), and **`DEPLOY.md`** with click-by-click steps.
+- **Host detection:** on Render/Railway/Fly the QR codes automatically use the site's `https://` address.
+- **Data folder setting:** `DATA_DIR` keeps the database on the host's persistent disk.
+- **Real-use mode:** `SEED_MODE=minimal` starts with only the document list and the head registrar account (`ADMIN_PASSWORD`), and hides the demo buttons on the sign-in page.
+- **Public-site safety:** change password (Account page), login throttling, Secure cookies + HSTS over https, `/health` check, clean shutdown on redeploy.
+
+### v2.3
+- **Everyone signs in with a password.** Students use their student number or school email, staff use their staff ID. Passwords are hashed with PBKDF2-SHA256 at 210,000 iterations with a random salt for each account, so the database never holds a usable password. Sign-ups only accept school email domains (`ALLOWED_EMAIL_DOMAINS`).
+- **Email notices through Gmail, with the student choosing where.** Every notification in the app is also emailed. In **Account → Email notices** a student picks one of three: their **school email** (the Outlook address they signed up with), a **personal email** such as Gmail, or **no email at all**, in which case notices stay in the bell. A personal address only starts receiving mail after a 6-digit code sent to it is typed back in, so a typo cannot send appointment details to a stranger. This matters because mail from a Gmail sender often lands in a school Outlook Junk folder. Set `GMAIL_USER` and `GMAIL_APP_PASSWORD` (see DEPLOY.md); leave them blank and the messages print in the console instead.
+- **Registrar staff** keep staff ID + password, on their own tab.
+- **"Change password" removed** for everyone.
+- **Registrar can upload a signature image.** The paper background is removed automatically; drawing still works too.
+
+### v2.4
+- **Show/hide password.** Every password box has an eye button to show or hide what you typed.
+- **Password strength meter.** Create account and Change password show *Weak / Fair / Strong / Very strong* as you type, plus a tip, and say whether the repeated password matches. Weak passwords are stopped before they reach the server.
+- **Top header hides while scrolling down** and comes back as soon as you scroll up, so there is more room for content (especially on phones).
+- **Small notification dropdown (like eLMS).** The bell opens a compact panel with the latest notices, *Mark all as read*, and *See all notifications*. The full Notifications page uses the same compact rows.
+- **Sign-out confirmation.** "Are you sure you want to log out?" pop-up before signing out, from the sidebar or the Account page.
+- **Calendar:** days before today are shown in **red** and can't be clicked; only today onward can be booked (the server also refuses past dates).
+- **Dashboard header:** the registrar dashboard opens with a header banner (greeting, date, what needs attention, quick buttons).
+- **Folder structure:** the app has separate `backend/` and `frontend/` folders. Each is split into clear subfolders so code is quick to find. See section 3.
+
+## 3. Project structure
+
+The full technical reference is in [`docs/SYSTEM DOCUMENTATION.md`](docs/SYSTEM%20DOCUMENTATION.md).
+
+```
+backend/                  Server, configuration, business logic, storage and database schema
+  server.js               HTTP server and API
+  config.js               Office rules and settings defaults
+  core/                   Business rules, repositories, seed data and mailer
+  database/schema.sql     Database tables, keys, indexes and checks
+  tools/                  Backend utilities, including the preview builder
+frontend/                 Browser app
+  index.html              App shell; env.js is generated from .env
+  css/                    Base, layout, component and page styles
+  js/                     Browser logic, shared components and screens
+data/                     Runtime database and secret files (created on first start)
+docs/                     System documentation
+.env                      Local settings (ignored by Git)
+README.md, DEPLOY.md       Setup and deployment guides
+Dockerfile, render.yaml   Hosting setup
+```
+
+**Architecture in one sentence (for the panel):** a single-page front end talks to a JSON
+REST API; the API's rules live in `backend/core/logic.js` and reach the database only through a
+repository object, so the same rules run against SQLite on the server and against memory in
+the preview.
+
+### Tables
+`users`, `document_types`, `requests`, `request_items`, `status_history`, `closures`,
+`capacity_overrides`, `notifications`, `announcements`, `settings`. See `backend/database/schema.sql`.
+
+### Request statuses
+`pending → approved → processing → ready → released`, plus `rejected`, `cancelled`,
+`missed` (on hold, can be rescheduled) and `noshow` (closed). Payment has its own track:
+`none | unpaid → submitted → verified` (or `rejected` → re-upload).
+
+### Main API endpoints
+| Method | Path | Who |
+| --- | --- | --- |
+| POST | `/api/auth/login` (staff), `/api/auth/logout`, `/api/me/profile` (student number, once) | — |
+| GET | `/api/documents`, `/api/availability?month=&docs=`, `/api/slots?date=` | signed in |
+| GET/POST | `/api/requests`, `/api/requests/:id` | student (own) / registrar (all) |
+| POST | `/api/requests/:id/cancel`, `/reschedule`, `/payment` | student |
+| POST | `/api/requests/:id/transition`, `/verify-payment`, `/api/requests/bulk-approve` | registrar |
+| GET | `/api/board` | signed in (claiming board) |
+| GET | `/api/public/slip/:ref?t=token` | anyone with the QR link |
+| GET | `/api/registrar/dashboard`, `/api/registrar/manifest?date=` | registrar |
+| GET/POST/DELETE | `/api/closures`, `/api/capacity`, `/api/announcements` | registrar |
+| GET/POST | `/api/notifications`, `/api/notifications/read` | signed in |
+| GET/POST | `/api/settings` (registrar name + signature) | read: all · write: head |
+
+---
+
+## 4. Security notes (for the manuscript)
+- Passwords: **PBKDF2-SHA256, 210,000 iterations, 16-byte random salt per account**, compared with `timingSafeEqual`. Raising the work factor upgrades each password automatically on its owner's next sign-in. A wrong password and an unknown account return the same message, so the page cannot be used to discover who is registered.
+- Staff passwords: **PBKDF2-SHA256, 100,000 iterations, random salt per user**, constant-time compare.
+- Sessions: random 256-bit token in an **HttpOnly, SameSite=Lax** cookie, 8-hour sliding expiry.
+- **CSRF**: every write must carry the `X-Requested-With: CampusFlow` header, which a
+  cross-site form cannot send.
+- **SQL injection**: every query uses `?` placeholders (`backend/core/repo-sqlite.js`).
+- **XSS**: all user text is escaped before it touches the page (`esc()` in `frontend/js/core/helpers.js`).
+- Students can only open, pay, move or cancel **their own** requests; role checks on every endpoint.
+- Login gives one generic error for wrong ID or wrong password.
+- Receipt photos are shrunk in the browser and size-limited on the server.
+
+## 5. Changing the rules
+Edit `backend/config.js` and restart: opening hours, window length, seats per window, lunch break,
+booking range, lead time, grace period, reschedule window, reminder timing, masking.
+
+## 6. Moving to MySQL later
+`backend/database/schema.sql` is standard SQL. Swap `backend/core/repo-sqlite.js` for a MySQL version with the
+same function names (e.g. using `mysql2`) — nothing in `backend/core/logic.js` or the front end changes.

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0E2A55">
+  <title>CampusFlow — STI Registrar</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23FFD21F'/><text x='32' y='42' font-family='Arial' font-weight='800' font-size='26' text-anchor='middle' fill='%230E2A55'>CF</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Caveat:wght@600&display=swap" rel="stylesheet">
+  <!-- Styles: base → layout → components → pages → responsive → print (order matters) -->
+  <link rel="stylesheet" href="css/base/tokens.css">
+  <link rel="stylesheet" href="css/base/base.css">
+  <link rel="stylesheet" href="css/layout/shell.css">
+  <link rel="stylesheet" href="css/components/cards.css">
+  <link rel="stylesheet" href="css/components/buttons.css">
+  <link rel="stylesheet" href="css/components/forms.css">
+  <link rel="stylesheet" href="css/components/status.css">
+  <link rel="stylesheet" href="css/pages/request-wizard.css">
+  <link rel="stylesheet" href="css/components/calendar.css">
+  <link rel="stylesheet" href="css/components/appointment.css">
+  <link rel="stylesheet" href="css/components/lists.css">
+  <link rel="stylesheet" href="css/components/board.css">
+  <link rel="stylesheet" href="css/pages/registrar.css">
+  <link rel="stylesheet" href="css/pages/dashboard.css">
+  <link rel="stylesheet" href="css/pages/auth.css">
+  <link rel="stylesheet" href="css/components/overlays.css">
+  <link rel="stylesheet" href="css/components/notifications.css">
+  <link rel="stylesheet" href="css/pages/slips.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/print.css">
+  <script>try{var t=localStorage.getItem('cf_theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}</script>
+</head>
+<body>
+  <div id="root" class="shell no-chrome"><div class="loading">Loading CampusFlow…</div></div>
+  <noscript><p style="padding:2rem">CampusFlow needs JavaScript turned on.</p></noscript>
+  <!-- Where the back end is (from .env → API_URL). Blank = same address as this page. -->
+  <script src="env.js"></script>
+  <!-- Shared business rules, served by the back end -->
+  <script>document.write('<script src="' + ((window.CAMPUSFLOW_ENV || {}).apiUrl || '') + '/core/logic.js"><\/script>');</script>
+  <script src="js/vendor/qrcode.js"></script>
+  <!-- Core (helpers, UI, router) — load first -->
+  <script src="js/core/api.js"></script>
+  <script src="js/core/helpers.js"></script>
+  <script src="js/core/ui.js"></script>
+  <script src="js/core/media.js"></script>
+  <script src="js/core/notifications.js"></script>
+  <script src="js/core/layout.js"></script>
+  <script src="js/core/router.js"></script>
+  <!-- Reusable components -->
+  <script src="js/components/password.js"></script>
+  <script src="js/components/board.js"></script>
+  <script src="js/components/date-picker.js"></script>
+  <script src="js/components/request-ui.js"></script>
+  <script src="js/components/slip.js"></script>
+  <!-- Pages -->
+  <script src="js/pages/auth/auth-frame.js"></script>
+  <script src="js/pages/auth/login.js"></script>
+  <script src="js/pages/auth/register.js"></script>
+  <script src="js/pages/common/board.js"></script>
+  <script src="js/pages/common/notifications.js"></script>
+  <script src="js/pages/common/account.js"></script>
+  <script src="js/pages/student/home.js"></script>
+  <script src="js/pages/student/new-request.js"></script>
+  <script src="js/pages/student/my-requests.js"></script>
+  <script src="js/pages/student/request-detail.js"></script>
+  <script src="js/pages/registrar/dashboard.js"></script>
+  <script src="js/pages/registrar/queue.js"></script>
+  <script src="js/pages/registrar/request-detail.js"></script>
+  <script src="js/pages/registrar/claiming-list.js"></script>
+  <script src="js/pages/registrar/closures.js"></script>
+  <script src="js/pages/registrar/announcements.js"></script>
+  <script src="js/pages/registrar/signature.js"></script>
+  <script src="js/pages/registrar/email-setup.js"></script>
+  <script src="js/pages/slips/slip-pages.js"></script>
+  <script>App.route();</script>
+</body>
+</html>
