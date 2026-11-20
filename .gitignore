@@ -1,13 +1,9 @@
-# .NET build output
-bin/
-obj/
-
-# Visual Studio
-.vs/
-*.user
-*.suo
-
-# SQLite demo database
+data/
+dist/
+node_modules/
 *.db
-*.db-shm
 *.db-wal
+*.db-shm
+.env
+.env.local
+frontend/env.js

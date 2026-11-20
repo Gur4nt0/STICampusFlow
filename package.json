@@ -1,0 +1,14 @@
+{
+  "name": "sti-campusflow",
+  "version": "2.0.0",
+  "description": "STI CampusFlow — Registrar document request and appointment system (HTML/CSS/JS + Node.js + SQLite)",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning backend/server.js",
+    "reset": "node -e \"require('fs').rmSync('data',{recursive:true,force:true})\" && node --disable-warning=ExperimentalWarning backend/server.js",
+    "preview": "node backend/tools/build-preview.js"
+  },
+  "engines": { "node": ">=22.13" },
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -1,0 +1,9 @@
+/* print.css — Print rules */
+@media print {
+  body { background: #fff; }
+  .shell { display: block; }
+  .sidebar, .topbar, .tabbar, .rail, .print-actions, .toasts, .no-print { display: none !important; }
+  .main { padding: 0; }
+  .print-page { padding: 0; max-width: none; }
+  .slip { box-shadow: none; border-color: #999; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

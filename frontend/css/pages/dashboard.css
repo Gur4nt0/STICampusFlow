@@ -1,0 +1,11 @@
+/* pages/dashboard.css — header banner on the registrar dashboard */
+.dash-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.25rem; flex-wrap: wrap; padding: 1.5rem 1.6rem; border-radius: var(--radius-lg); background: var(--rail); color: #fff; box-shadow: var(--shadow-card); position: relative; overflow: hidden; }
+.dash-header::after { content: ""; position: absolute; right: -70px; top: -80px; width: 240px; height: 240px; border-radius: 50%; border: 38px solid rgba(255, 210, 31, .14); pointer-events: none; }
+.dash-header > * { position: relative; z-index: 1; }
+.dash-header h1 { color: #fff; margin-top: .35rem; }
+.dash-eyebrow { display: inline-flex; align-items: center; gap: .45rem; font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); }
+.dash-eyebrow svg, .dash-date svg { width: 16px; height: 16px; }
+.dash-date { display: flex; align-items: center; gap: .45rem; flex-wrap: wrap; margin-top: .45rem; color: #C4D2EA; }
+.dash-actions { gap: .6rem; }
+.btn-on-dark { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.28); color: #fff; }
+.btn-on-dark:hover { background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.45); }

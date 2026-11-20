@@ -1,0 +1,28 @@
+/* components/board.css — Claiming board (side rail) */
+/* ---------- claiming board (feedback: announcements on the side) */
+.board-head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
+.board-live { display: inline-flex; align-items: center; gap: .4rem; font-size: .78rem; font-weight: 700; color: var(--success); }
+.board-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+.claims { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: 13px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow-card); }
+.claims li { display: grid; grid-template-columns: 74px minmax(0, 1fr) auto; gap: .6rem; align-items: center; padding: .6rem .8rem; border-bottom: 1px solid var(--border); font-size: .86rem; }
+.claims li:last-child { border-bottom: 0; }
+.claims .t { white-space: nowrap; font-weight: 800; font-variant-numeric: tabular-nums; }
+.claims .cw { min-width: 0; }
+.claims .cw b { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.claims .cw span:not(.you) { display: block; color: var(--muted); font-size: .78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.claims li.mine { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
+.claims li.done { color: var(--muted); }
+.claims li.done .t { text-decoration: line-through; }
+.claims .ok { color: var(--success); font-weight: 700; font-size: .78rem; }
+.you { background: var(--accent); color: #3A2F00; font-size: .68rem; font-weight: 800; padding: 1px 6px; border-radius: 5px; margin-left: 4px; }
+.load { display: grid; grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 5px; margin-top: .6rem; }
+.load div { font-size: .7rem; text-align: center; padding: .35rem 0; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); font-weight: 700; }
+.load div span { display: block; color: var(--muted); font-weight: 400; }
+.load .full { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+.load .low { background: var(--warn-soft); border-color: transparent; }
+.announce { padding: .8rem .9rem; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); border-left: 5px solid var(--primary); }
+.announce.suspension { border-left-color: var(--warn); }
+.announce.closure { border-left-color: var(--danger); }
+.announce b { display: block; font-size: .92rem; }
+.announce p { font-size: .85rem; color: var(--muted); margin-top: .2rem; }

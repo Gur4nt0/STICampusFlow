@@ -1,0 +1,75 @@
+/* responsive.css — Tablet and phone layout (load after everything else) */
+/* ==========================================================================
+   Responsive: tablet and phone (feedback: "diko maopen sa phone")
+   ========================================================================== */
+@media (max-width: 1279px) {
+  .shell.has-rail { grid-template-columns: 240px minmax(0, 1fr); }
+  .shell .rail { display: none; }
+}
+@media (max-width: 1023px) {
+  .shell, .shell.has-rail { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { display: none; }
+  .mobile-brand { display: flex; align-items: center; gap: .55rem; text-decoration: none; color: var(--text); }
+  .mobile-brand .brand-mark { width: 34px; height: 34px; font-size: .9rem; }
+  .mobile-brand b { font: 700 1.02rem var(--font-head); }
+  .topbar-title, .who { display: none; }
+  .main { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .tabbar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--surface); border-top: 1px solid var(--border); padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -8px 24px -16px rgba(0,0,0,.4); }
+  .tabbar a { display: grid; justify-items: center; gap: 2px; padding: 5px 2px; border-radius: 10px; color: var(--muted); text-decoration: none; font-size: .7rem; font-weight: 700; position: relative; }
+  .tabbar a svg { width: 22px; height: 22px; }
+  .tabbar a.active { color: var(--primary); background: var(--primary-soft); }
+  .tabbar a.cta svg { background: var(--accent); color: #1A1A1A; border-radius: 10px; padding: 3px; width: 30px; height: 30px; margin-top: -4px; }
+  .summary-bar { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .toasts { bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .auth { grid-template-columns: minmax(0, 1fr); }
+  .auth-art { padding: 1.75rem 1.25rem 2.25rem; }
+  .auth-art .ticket-demo { display: none; }
+}
+@media (max-width: 700px) {
+  body { font-size: 15.5px; }
+  .grid-2, .grid-3, .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .filters .q { grid-column: 1 / -1; }
+  .steps li { font-size: 0; padding: .5rem; justify-content: center; }
+  .steps li::before { font-size: .82rem; }
+  .steps li.current { font-size: .85rem; justify-content: flex-start; flex: 3; }
+  .card { padding: 1rem; }
+  .appt { grid-template-columns: minmax(0, 1fr); }
+  .datebox { width: 100%; display: flex; align-items: center; gap: .6rem; padding: .4rem .7rem; text-align: left; }
+  .datebox .m { background: none; color: var(--primary); padding: 0; font-size: .95rem; }
+  .datebox .d { font-size: 1.6rem; padding: 0; }
+  .datebox .w { padding: 0; }
+  .tracker div { font-size: .64rem; }
+  .req-row { grid-template-columns: 54px minmax(0, 1fr); }
+  .req-row > :last-child { grid-column: 2; justify-self: start; }
+  .kv { grid-template-columns: minmax(0, 1fr); gap: .1rem; }
+  .kv dd { margin-bottom: .5rem; }
+  .slip-grid { grid-template-columns: minmax(0, 1fr); }
+  .slip-when { grid-template-columns: minmax(0, 1fr); }
+  .qr-box { flex-direction: column; align-items: flex-start; }
+  .slip-head { flex-wrap: wrap; padding: 1rem; }
+  .slip-kind { margin-left: 0; width: 100%; text-align: left; display: flex; gap: .6rem; align-items: baseline; }
+  .slip-kind br { display: none; }
+  .slip-body { padding: 1rem; }
+  .print-page { padding: 1rem .25rem 2rem; }
+  .print-actions .row { width: 100%; }
+  .print-actions .row .btn { flex: 1 1 auto; }
+  .hide-sm { display: none !important; }
+  .show-sm { display: block !important; }
+  .cal-grid { gap: 4px; }
+  .cal-day { min-height: 40px; border-radius: 9px; font-size: .9rem; }
+  .cal-day small { font-size: .58rem; }
+  .modal { padding: 1.1rem; }
+  .modal-back { align-items: end; padding: 0; }
+  .modal { border-radius: 20px 20px 0 0; max-height: 92vh; padding-bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* phones: bell dropdown spans the screen; dashboard header stacks */
+@media (max-width: 700px) {
+  .notif-panel { position: fixed; left: .75rem; right: .75rem; top: calc(64px + env(safe-area-inset-top, 0px)); width: auto; max-width: none; }
+  .notif-panel::before { display: none; }
+  .dash-header { padding: 1.2rem; }
+  .dash-actions, .dash-header-side { width: 100%; }
+  .dash-actions .btn { flex: 1 1 auto; }
+}

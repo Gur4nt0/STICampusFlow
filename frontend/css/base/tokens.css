@@ -1,0 +1,60 @@
+/* base/tokens.css — Design tokens: colours, fonts, radius, shadows (light + dark) */
+/* ==========================================================================
+   STI CampusFlow — design system
+   Fonts: Bricolage Grotesque (headings), Atkinson Hyperlegible Next (body,
+   designed for easy reading). Colours come from STI blue + STI yellow.
+   ========================================================================== */
+:root {
+  --font-body: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  --font-head: "Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+
+  --bg: #E9EFF7;
+  --surface: #FFFFFF;
+  --surface-2: #F3F6FB;
+  --surface-3: #E3EAF4;
+  --border: #C6D2E3;
+  --border-strong: #9FB0C9;
+  --text: #15203A;
+  --muted: #55627B;
+  --primary: #0B4EA2;
+  --primary-hover: #093F84;
+  --primary-soft: #DCE8F9;
+  --on-primary: #FFFFFF;
+  --accent: #FFD21F;
+  --accent-hover: #F2C200;
+  --on-accent: #1A1A1A;
+  --success: #1B7F52; --success-soft: #DDF3E8;
+  --warn: #9A5B00;    --warn-soft: #FFF1D1;
+  --danger: #B42F2F;  --danger-soft: #FBE3E3;
+  --info: #0B4EA2;    --info-soft: #DCE8F9;
+  --cat-records: #0B4EA2; --cat-certification: #7A45C2; --cat-clearance: #0D857B; --cat-enrollment: #C57F00;
+  --shadow-card: 0 1px 0 rgba(21, 32, 58, .05), 0 8px 22px -12px rgba(21, 32, 58, .35);
+  --shadow-pop: 0 18px 50px -18px rgba(21, 32, 58, .55);
+  --radius: 14px; --radius-sm: 9px; --radius-lg: 20px;
+  --rail: #0E2A55; --rail-text: #C9D7EE; --rail-active: #FFD21F;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1322; --surface: #131E33; --surface-2: #19263F; --surface-3: #22324F;
+    --border: #2B3C5C; --border-strong: #41557C; --text: #E6ECF7; --muted: #9AA9C4;
+    --primary: #6AA6FF; --primary-hover: #8BB9FF; --primary-soft: #1B3358; --on-primary: #0B1322;
+    --success: #53CF93; --success-soft: #133A2B; --warn: #F2B750; --warn-soft: #3A2C10; --danger: #FF8A8A; --danger-soft: #3F1A1E; --info: #6AA6FF; --info-soft: #1B3358;
+    --cat-records: #6AA6FF; --cat-certification: #B596F0; --cat-clearance: #4FD1C1; --cat-enrollment: #F2B750;
+    --shadow-card: 0 1px 0 rgba(0,0,0,.3), 0 10px 26px -14px rgba(0,0,0,.8);
+    --shadow-pop: 0 20px 60px -20px rgba(0,0,0,.9);
+    --rail: #0A1A36; --rail-text: #A8B8D6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1322; --surface: #131E33; --surface-2: #19263F; --surface-3: #22324F;
+  --border: #2B3C5C; --border-strong: #41557C; --text: #E6ECF7; --muted: #9AA9C4;
+  --primary: #6AA6FF; --primary-hover: #8BB9FF; --primary-soft: #1B3358; --on-primary: #0B1322;
+  --success: #53CF93; --success-soft: #133A2B; --warn: #F2B750; --warn-soft: #3A2C10; --danger: #FF8A8A; --danger-soft: #3F1A1E; --info: #6AA6FF; --info-soft: #1B3358;
+  --cat-records: #6AA6FF; --cat-certification: #B596F0; --cat-clearance: #4FD1C1; --cat-enrollment: #F2B750;
+  --shadow-card: 0 1px 0 rgba(0,0,0,.3), 0 10px 26px -14px rgba(0,0,0,.8);
+  --shadow-pop: 0 20px 60px -20px rgba(0,0,0,.9);
+  --rail: #0A1A36; --rail-text: #A8B8D6;
+  color-scheme: dark;
+}

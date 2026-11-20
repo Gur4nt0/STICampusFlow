@@ -1,0 +1,21 @@
+/* components/lists.css — Request rows, tabs, empty state, timeline */
+/* ---------- lists */
+.list { display: grid; gap: .6rem; }
+.req-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: .85rem 1rem; border: 1px solid var(--border); border-radius: 13px; background: var(--surface); box-shadow: var(--shadow-card); text-decoration: none; color: inherit; }
+.req-row:hover { border-color: var(--border-strong); }
+.mini-date { text-align: center; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); padding: .3rem 0; line-height: 1.1; }
+.mini-date b { display: block; font: 800 1.3rem var(--font-head); }
+.mini-date span { font-size: .72rem; font-weight: 700; color: var(--muted); }
+.req-title { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-3); margin-bottom: 1rem; }
+.tabs button { border: 0; background: transparent; padding: .45rem 1rem; border-radius: 9px; font-weight: 700; cursor: pointer; color: var(--muted); }
+.tabs button.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow-card); }
+.empty { text-align: center; padding: 2.5rem 1rem; border: 2px dashed var(--border); border-radius: var(--radius); color: var(--muted); display: grid; gap: .75rem; justify-items: center; }
+
+/* ---------- timeline */
+.timeline { list-style: none; padding: 0; margin: 0; }
+.timeline li { position: relative; padding: 0 0 1rem 1.6rem; }
+.timeline li::before { content: ""; position: absolute; left: 5px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--primary); }
+.timeline li::after { content: ""; position: absolute; left: 9px; top: 18px; bottom: 0; width: 2px; background: var(--border); }
+.timeline li:last-child::after { display: none; }
+.timeline time { display: block; font-size: .8rem; color: var(--muted); margin-top: 2px; }
